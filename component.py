@@ -58,15 +58,15 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
     def generate_sector_errors(self, time):
         return self.disk_lse_dist.draw(time)
 
-    def repair(self):
+    def repair(self, current_time):
         self.repair_time = mpf(0)
         self.repair_start_time = mpf(0)
         self.state = Disk.STATE_OK
-        self.fail_time = self.disk_fail_dist.draw()
+        self.fail_time = self.disk_fail_dist.draw() + current_time
 
     def fail(self, current_time):
         self.state = Disk.STATE_FAILED
-        self.repair_time = self.disk_repair_dist.draw()
+        self.repair_time = self.disk_repair_dist.draw() + current_time
         self.repair_start_time = current_time
         self.fail_time = mpf(0)
 
@@ -87,7 +87,7 @@ class Raid:
         self.data_fragments = int(d)
         self.parity_fragments = int(p)
 
-        self.logger.debug("RAID: raid_type = %s" % raid_type)
+        self.logger.debug("RAID: raid_type = %s, data = %d, parity = %d" % (self.type, self.data_fragments, self.parity_fragments))
 
         self.disks = [Disk(disk_capacity, disk_fail_parms, disk_repair_parms,
             disk_lse_parms, disk_scrubbing_parms) for i in range(self.data_fragments + self.parity_fragments)]
@@ -106,7 +106,7 @@ class Raid:
 
     # Return bytes we lost if the RAID is failure 
     def check_failure(self):
-        if(self.fail_count > self.parity_fragments):
+        if self.fail_count > self.parity_fragments:
             # calculate the bytes lost if the RAID is failure
             # We assume the RAID is well rotated.
             data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
@@ -164,15 +164,15 @@ class Raid:
         self.disks[disk_idx].fail(event_time);
         self.fail_count += 1
 
-    def upgrade(self, disk_idx):
-        self.disks[disk_idx].repair()
+    def upgrade(self, disk_idx, event_time):
+        self.disks[disk_idx].repair(event_time)
         self.fail_count -= 1
 
     def update_to_event(self, disk_idx, event_type, event_time):
         if event_type == Disk.EVENT_FAIL:
             self.degrade(disk_idx, event_time)
         elif event_type == Disk.EVENT_REPAIR:
-            self.upgrade(disk_idx)
+            self.upgrade(disk_idx, event_time)
         else:
             sys.exit(2)
 

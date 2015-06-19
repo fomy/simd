@@ -74,6 +74,8 @@ class Samples:
     # self.conf_lvl_lku[conf_level] * sqrt(Var)/sqrt(num_samples) / mean
     #
     def calcRE(self, conf_level="0.90"):
+        if self.calcMean() == 0:
+            return 0
         
         return (self.conf_lvl_lku[conf_level] * (self.calcStdDev() / sqrt(self.num_samples))) / self.calcMean()
 
