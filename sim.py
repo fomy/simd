@@ -53,7 +53,7 @@ def get_parms():
     verbose = False
     # 87600 hours, for 10 years
     mission_time = 87600
-    # more iterations for more accurate estimate
+    # more iterations, more accurate estimate
     iterations = 10000
     # the data/parity configuration
     # such as mds_7_1
@@ -61,10 +61,11 @@ def get_parms():
     # the number of raid
     raid_num = 1
     # the number of sectors in each disk
-    # 512bytes for each sector
+    # 512 bytes for each sector
+    # So the default is 1TB
     disk_capacity = 2*1024*1024*1024
 
-    # (shape, scale, location)
+    # For failure, restore, and scrubbing, the parameters are (shape, scale, location)
 
     # data from [Elerath2009]
     disk_fail_parms = (1.2, 461386.0, 0)
@@ -151,10 +152,13 @@ def get_parms():
         elif o in ("-v", "--verbose"):
             verbose = True
 
+    # TO-DO: We should verify these numbers
+    # We assume larger disks will have longer repair and scrubbing time
+    factor = mpf(1) * disk_capacity / (2*1024*1024*1024)
     # The following parameters may change with disk capacity
     if disk_repair_parms == None:
         # data from [Elerath2009]
-        disk_repair_parms = (2.0, 12.0, 6.0)
+        disk_repair_parms = (2.0, 12.0*factor, 6.0*factor)
 
     if disk_lse_parms == None:
         # (rate)
@@ -163,7 +167,7 @@ def get_parms():
 
     if disk_scrubbing_parms == None:
         # data from [Elerath2009]
-        disk_scrubbing_parms = (3, 168, 6)
+        disk_scrubbing_parms = (3, 168*factor, 6*factor)
    
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
@@ -174,15 +178,18 @@ def do_it():
     (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) = get_parms()
 
+    #print (mission_time, iterations, raid_type, raid_num, disk_capacity, 
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
+
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
 
-    (prob_result, byte_result) = simulation.simulate()
+    #(prob_result, byte_result) = simulation.simulate()
 
-    print "\n*******************\n"
-    print "Estimated reliability: %e +/- %f Percent, CI (%e,%e)" % prob_result)
-    print "\n*******************\n"
-    print "Average bytes lost: %.5f +/- %f Percent, CI (%e,%e), number_zeroes: %d" % byte_result)
+    #print "\n*******************\n"
+    #print "Estimated reliability: %e +/- %f Percent, CI (%e,%e)" % prob_result)
+    #print "\n*******************\n"
+    #print "Average bytes lost: %.5f +/- %f Percent, CI (%e,%e), number_zeroes: %d" % byte_result)
 
 if __name__ == "__main__":
     do_it()

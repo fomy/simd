@@ -1,7 +1,7 @@
 import mpmath
 import random
 
-Class Weibull:
+class Weibull:
     def __init__(self, shape, scale, location):
         self.shape = mpf(shape)
         self.scale = mpf(scale)
@@ -10,7 +10,7 @@ Class Weibull:
     def draw(self):
         return random.weibullvariate(self.scale, self.shape) + self.location
 
-Class Poisson:
+class Poisson:
     def __init__(self, rate):
         self.rate = rate
 
@@ -27,7 +27,7 @@ Class Poisson:
             p = p * u
             if p <= L:
                 break
-            
+
         return k - 1 
 
-        
+

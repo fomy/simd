@@ -95,8 +95,8 @@ class Raid:
         if(self.fail_count > self.parity_fragments):
             # calculate the bytes lost if the RAID is failure
             # We assume the RAID is well rotated.
-            return self.disks[0].disk_capacity * Disk.SECTOR_SIZE *
-                self.data_fragments/(self.data_fragments + self.parity_fragments)
+            data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
+            return self.disks[0].disk_capacity * Disk.SECTOR_SIZE * data_fraction
         return 0
 
     def get_critical_region(self, current_time):
@@ -149,10 +149,12 @@ class Raid:
         self.fail_count -= 1
 
     def update_to_event(self, disk_idx, event_type, event_time):
-         if event_type == Disk.EVENT_FAIL:
+        if event_type == Disk.EVENT_FAIL:
             self.degrade(disk_idx, event_time)
-        else event_type == Disk.EVENT_REPAIR:
+        elif event_type == Disk.EVENT_REPAIR:
             self.upgrade(disk_idx)
+        else:
+            sys.exit(2)
 
 
 
