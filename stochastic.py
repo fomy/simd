@@ -33,3 +33,9 @@ class Poisson:
 
         return k - 1 
 
+def test():
+    w = Weibull(1, 12, 0)
+    print w.draw()
+
+if __name__ == "__main__":
+    test()
