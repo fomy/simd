@@ -158,7 +158,8 @@ def get_parms():
     # The following parameters may change with disk capacity
     if disk_repair_parms == None:
         # data from [Elerath2009]
-        disk_repair_parms = (2.0, 12.0*factor, 6.0*factor)
+        disk_repair_parms = (1.0, 12.0, 0)
+        #disk_repair_parms = (2.0, 12.0*factor, 6.0*factor)
 
     if disk_lse_parms == None:
         # (rate)
@@ -189,8 +190,12 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
 
-    (prob_result, byte_result) = simulation.simulate()
+    (prob_result, byte_result, raid_failure_count, sector_error_count) = simulation.simulate()
 
+    data_loss_event = raid_failure_count + sector_error_count
+
+    print "*******************"
+    print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
     print "Estimated reliability: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
     print "*******************"

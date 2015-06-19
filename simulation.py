@@ -25,6 +25,8 @@ class Simulation:
 
     def simulate(self):
         sample_list = []
+        raid_failure_count = 0
+        sector_error_count = 0
 
         for i in range(self.iterations):
             self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
@@ -37,9 +39,11 @@ class Simulation:
             elif result[0] == System.EVENT_RAID_FAILURE:
                 self.logger.warning("%dth iteration: %s, %d bytes lost" % (i, result[0], result[1]))
                 sample_list.append(result[1])
+                raid_failure_count += 1
             elif result[0] == System.EVENT_SECTORS_LOST:
                 self.logger.debug("%dth iterations: %s, %d bytes lost" % (i, result[0], sum(result[1:])))
                 sample_list.append(sum(result[1:]))
+                sector_error_count += len(result) - 1
             else:
                 sys.exit(2)
         
@@ -59,4 +63,4 @@ class Simulation:
         # finished, return results
         # the format of result:
         # (mean, re, low_ci, high_ci)
-        return (prob_result, byte_result) 
+        return (prob_result, byte_result, raid_failure_count, sector_error_count) 
