@@ -177,28 +177,12 @@ def do_it():
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
 
-    (run_samples, bytes_samples, distinct_patterns) = simulation.run()
-
-    samples = Samples(run_samples)
-    mean = samples.calcMean()
-    (low_ci, high_ci) = samples.calcConfInterval("0.90")
-    relative_error = 100*samples.calcRE()
+    (prob_result, byte_result) = simulation.simulate()
 
     print "\n*******************\n"
-    print "Estimated reliability: %e +/- %f Percent, CI (%e,%e), num_zeroes: %d" % (mean, relative_error, low_ci, high_ci, samples.get_num_zeroes())
+    print "Estimated reliability: %e +/- %f Percent, CI (%e,%e)" % prob_result)
     print "\n*******************\n"
-
-    samples = Samples(bytes_samples)
-    mean = samples.calcMean()
-    (low_ci, high_ci) = samples.calcConfInterval("0.90")
-    relative_error = 100*samples.calcRE()
-
-    print "Average bytes lost: %.5f +/- %f Percent, CI (%e,%e), number_zeroes: %d" % (mean, relative_error, low_ci, high_ci, samples.get_num_zeroes())
-
-    print "\n*******************\n"
-    print "DL patterns: (disks, sectors): num instances"
-    for key in distinct_patterns.keys():
-        print key, ": ", distinct_patterns[key]
+    print "Average bytes lost: %.5f +/- %f Percent, CI (%e,%e), number_zeroes: %d" % byte_result)
 
 if __name__ == "__main__":
     do_it()

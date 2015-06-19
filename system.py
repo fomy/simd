@@ -1,9 +1,9 @@
 import component
 
 class System:
-    RAID_FAILURE = "RAID Failure"
-    SECTORS_LOST = "Sectors Lost"
-    NOTHING_LOST = "Nothing Lost"
+    EVENT_NOTHING_LOST = 0 #"Nothing Lost"
+    EVENT_RAID_FAILURE = 1 #"RAID Failure"
+    EVENT_SECTORS_LOST = 2 #"Sectors Lost"
 
     # A system consists of many RAIDs
     def __init__(self, mission_time, raid_type, raid_num, disk_capacity, 
@@ -33,11 +33,11 @@ class System:
         return (raid_idx, disk_idx, event_type, event_time)
 
     # Three possible returns
-    # [System.NOTHING_LOST]
-    # [System.RAID_FAILURE, bytes]
-    # [System.SECTORS_LOST, lost1, lost2, ...]
+    # [System.EVENT_NOTHING_LOST]
+    # [System.EVENT_RAID_FAILURE, bytes]
+    # [System.EVENT_SECTORS_LOST, lost1, lost2, ...]
     def run(self):
-        sectors_lost = System.SECTORS_LOST
+        sectors_lost = System.EVENT_SECTORS_LOST
         while True:
             (raid_idx, disk_idx, event_type, event_time) = self.go_to_next_event()
             if event_time > mission_time:
@@ -54,7 +54,7 @@ class System:
                 # It seems unnecessary to further check LSEs
                 # TO-DO: When deduplication model is ready, we need to amplify bytes_lost
                 # e.g., bytes_lost * deduplication factor
-                return [System.RAID_FAILURE, bytes_lost]
+                return [System.EVENT_RAID_FAILURE, bytes_lost]
 
             # Check whether a LSE will cause a data loss
             # check_sectors_lost will return the bytes of sector lost
@@ -63,11 +63,7 @@ class System:
 
         # The mission concludes
         if len(sectors_lost) == 1:
-            return [System.NOTHING_LOST]
+            return [System.EVENT_NOTHING_LOST]
 
         # TO-DO: Waiting for deduplication model
         return sectors_lost
-
-
-
-
