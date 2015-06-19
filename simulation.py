@@ -32,12 +32,13 @@ class Simulation:
 
             result = self.system.run()
 
-            self.logger.debug("Simulation result: %s" % result[0])
             if result[0] == System.EVENT_NOTHING_LOST:
                 sample_list.append(0)
             elif result[0] == System.EVENT_RAID_FAILURE:
+                self.logger.warning("%dth iteration: %s, %d bytes lost" % (i, result[0], result[1]))
                 sample_list.append(result[1])
             elif result[0] == System.EVENT_SECTORS_LOST:
+                self.logger.debug("%dth iterations: %s, %d bytes lost" % (i, result[0], sum(result[1:])))
                 sample_list.append(sum(result[1:]))
             else:
                 sys.exit(2)
@@ -45,7 +46,6 @@ class Simulation:
         prob_result = None
         byte_result = None
 
-        print sample_list
         samples = Samples(sample_list)
         byte_result = samples.getResults()
 
@@ -53,7 +53,6 @@ class Simulation:
             if sample_list[i] > 0:
                 sample_list[i] = 1
 
-        print sample_list
         samples = Samples(sample_list)
         prob_result = samples.getResults()
 
