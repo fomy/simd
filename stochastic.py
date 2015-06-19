@@ -1,14 +1,17 @@
-import mpmath
+from mpmath import *
 import random
 
 class Weibull:
-    def __init__(self, shape, scale, location):
+    def __init__(self, shape, scale, location=0):
         self.shape = mpf(shape)
         self.scale = mpf(scale)
         self.location = mpf(location)
 
     def draw(self):
-        return random.weibullvariate(self.scale, self.shape) + self.location
+        v = random.weibullvariate(self.scale, self.shape)
+        if v < self.location:
+            return self.location
+        return v
 
 class Poisson:
     def __init__(self, rate):
@@ -18,7 +21,7 @@ class Poisson:
     # See https://en.wikipedia.org/wiki/Poisson_distribution
     # The input is the scrubbing time
     def draw(self, time=336):
-        L = mpmath.exp(-time*self.rate)
+        L = exp(-time*self.rate)
         k = 0
         p = 1
         while True:
@@ -29,5 +32,4 @@ class Poisson:
                 break
 
         return k - 1 
-
 

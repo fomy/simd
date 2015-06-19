@@ -21,9 +21,11 @@ class Samples:
     #
     def __init__(self, samples):
         self.samples = samples
+
         self.sample_sum = mpf(0)
         for sample in samples:
             self.sample_sum += sample
+
         self.num_samples = len(self.samples)
 
         # 
@@ -95,7 +97,7 @@ class Samples:
 
     def getResults(self, conf_level="0.90"):
         (lower, upper) = self.calcConfInterval()
-        return (self.calcMean(), self.calcRE(), lower, upper)
+        return (self.calcMean(), 100*self.calcRE(), lower, upper, self.calcStdDev())
 
     
 #

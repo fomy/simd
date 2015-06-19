@@ -5,10 +5,10 @@ from mpmath import *
 from numpy import random
 import getopt
 
-import simulation
+from simulation import *
 
 def usage(arg):
-    print arg, ": -h [--help] -v [--verbose] -m <mission_time> [--mission_time <mission_time>]"
+    print arg, ": -h [--help] -l [--log] -m <mission_time> [--mission_time <mission_time>]"
     print "-i <num_iterations> [--iterations <num_iterations>] -r <raid_type> [--raid <raid_type>]"
     print "-n <num_raids> [--raid_num <num_raids>] -c <disk_capacity> [--capacity <disk_capacity>]"
     print "-F <disk_fail_dist> [--disk_fail_dist <disk_fail_dist>]"
@@ -50,7 +50,7 @@ def usage(arg):
     sys.exit(2)
 
 def get_parms():
-    verbose = False
+    logging.basicConfig(level = getattr(logging, "WARNING"))
     # 87600 hours, for 10 years
     mission_time = 87600
     # more iterations, more accurate estimate
@@ -77,7 +77,7 @@ def get_parms():
     disk_scrubbing_parms = None
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hm:i:r:n:c:F:R:L:S:", ["help", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:F:R:L:S:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -95,6 +95,9 @@ def get_parms():
         if o in ("-h", "--help"):
             print usage(sys.argv[0])
             sys.exit(0)
+        if o in ("-l", "--log"):
+            logger = logging.getLogger("sim")
+            logger.setLevel(getattr(logging, a.upper()))
         if o in ("-F", "--disk_fail_dist"):
             if len(eval(a)) == 1:
                 disk_fail_parms = (1, eval(a), 0)
@@ -149,9 +152,6 @@ def get_parms():
         elif o in ("-c", "--capacity"):
             disk_capacity = int(a) 
 
-        elif o in ("-v", "--verbose"):
-            verbose = True
-
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
     factor = mpf(1) * disk_capacity / (2*1024*1024*1024)
@@ -175,21 +175,27 @@ def get_parms():
 
 def do_it():
 
+    logger = logging.getLogger("sim")
+
     (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) = get_parms()
 
-    #print (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
+    logger.debug("Parameters: mission time = %d, iterations = %d, raid_type = %s, raid_num = %d, \
+disk_capacity = %d, disk_fail_parms = %s, disk_repair_parms = %s, \
+disk_lse_parms = %s, disk_scrubbing_parms = %s" % 
+            (mission_time, iterations, raid_type, raid_num, disk_capacity, 
+            str(disk_fail_parms), str(disk_repair_parms), str(disk_lse_parms), str(disk_scrubbing_parms)))
 
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
 
-    #(prob_result, byte_result) = simulation.simulate()
+    (prob_result, byte_result) = simulation.simulate()
 
-    #print "\n*******************\n"
-    #print "Estimated reliability: %e +/- %f Percent, CI (%e,%e)" % prob_result)
-    #print "\n*******************\n"
-    #print "Average bytes lost: %.5f +/- %f Percent, CI (%e,%e), number_zeroes: %d" % byte_result)
+    print "*******************"
+    print "Estimated reliability: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
+    print "*******************"
+    print "Average bytes lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % byte_result
+    print "*******************"
 
 if __name__ == "__main__":
     do_it()

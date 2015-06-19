@@ -1,7 +1,12 @@
-import system
-import statistics
+import logging
+
+from system import *
+from statistics import *
 
 class Simulation:
+
+    logger = logging.getLogger("sim")
+
     def __init__(self, mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
         self.mission_time = mission_time
@@ -14,6 +19,8 @@ class Simulation:
         self.disk_lse_parms = disk_lse_parms
         self.disk_scrubbing_parms = disk_scrubbing_parms
 
+        self.logger.debug("Simulation: iterations = %d" % iterations)
+
         self.system = None
 
     def simulate(self):
@@ -25,6 +32,7 @@ class Simulation:
 
             result = self.system.run()
 
+            self.logger.debug("Simulation result: %s" % result[0])
             if result[0] == System.EVENT_NOTHING_LOST:
                 sample_list.append(0)
             elif result[0] == System.EVENT_RAID_FAILURE:
@@ -37,6 +45,7 @@ class Simulation:
         prob_result = None
         byte_result = None
 
+        print sample_list
         samples = Samples(sample_list)
         byte_result = samples.getResults()
 
@@ -44,6 +53,7 @@ class Simulation:
             if sample_list[i] > 0:
                 sample_list[i] = 1
 
+        print sample_list
         samples = Samples(sample_list)
         prob_result = samples.getResults()
 

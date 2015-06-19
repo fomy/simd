@@ -1,9 +1,14 @@
-import component
+import logging
+from mpmath import *
+
+from component import *
 
 class System:
-    EVENT_NOTHING_LOST = 0 #"Nothing Lost"
-    EVENT_RAID_FAILURE = 1 #"RAID Failure"
-    EVENT_SECTORS_LOST = 2 #"Sectors Lost"
+    EVENT_NOTHING_LOST = "Nothing Lost"
+    EVENT_RAID_FAILURE = "RAID Failure"
+    EVENT_SECTORS_LOST = "Sectors Lost"
+
+    logger = logging.getLogger("sim")
 
     # A system consists of many RAIDs
     def __init__(self, mission_time, raid_type, raid_num, disk_capacity, 
@@ -11,6 +16,8 @@ class System:
         self.mission_time = mission_time
         self.raid_num = raid_num
         self.system_time = mpf(0)
+
+        self.logger.debug("System: mission_time = %d, raid_num = %d" % (self.mission_time, self.raid_num))
 
         self.raids = [Raid(raid_type, disk_capacity, disk_fail_parms,
                 disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) for i in range(raid_num)]
@@ -37,10 +44,16 @@ class System:
     # [System.EVENT_RAID_FAILURE, bytes]
     # [System.EVENT_SECTORS_LOST, lost1, lost2, ...]
     def run(self):
-        sectors_lost = System.EVENT_SECTORS_LOST
+
+        sectors_lost = [System.EVENT_SECTORS_LOST]
+
         while True:
+
             (raid_idx, disk_idx, event_type, event_time) = self.go_to_next_event()
-            if event_time > mission_time:
+
+            self.logger.debug("raid_idx = %d, disk_idx = %d, event_type = %s, event_time = %d" % (raid_idx, disk_idx, event_type, event_time))
+
+            if event_time > self.mission_time:
                 # mission complete
                 break
 
@@ -59,7 +72,9 @@ class System:
             # Check whether a LSE will cause a data loss
             # check_sectors_lost will return the bytes of sector lost
             # We need to further amplify it according to our file system
-            sectors_lost.append(self.raids[raid_idx].check_sectors_lost(self.system_time))
+            lse = self.raids[raid_idx].check_sectors_lost(self.system_time)
+            if lse > 0:
+                sectors_lost.append(lse)
 
         # The mission concludes
         if len(sectors_lost) == 1:
