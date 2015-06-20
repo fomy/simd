@@ -104,18 +104,7 @@ class Raid:
                 failed_disks.append(disk)
         return failed_disks
 
-    # Return bytes we lost if the RAID is failure 
-    def check_failure(self):
-        if self.fail_count > self.parity_fragments:
-            # calculate the bytes lost if the RAID is failure
-            # We assume the RAID is well rotated.
-            data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
-
-            self.logger.debug("RAID Failure")
-
-            return self.disks[0].disk_capacity * Disk.SECTOR_SIZE * data_fraction
-        return 0
-
+    # the region where data may loss
     def get_critical_region(self, current_time):
         region = 1.0
         for disk in self.disks:
@@ -125,6 +114,21 @@ class Raid:
             if r < region:
                 region = r
         return region
+
+    # Return bytes we lost if the RAID is failure 
+    def check_failure(self, current_time):
+        if self.fail_count > self.parity_fragments:
+            # calculate the bytes lost if the RAID is failure
+            # We assume the RAID is well rotated.
+            data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
+
+            self.logger.debug("RAID Failure")
+
+            r = get_critical_region(current_time)
+
+            return self.disks[0].disk_capacity * Disk.SECTOR_SIZE * r * data_fraction
+        return 0
+
             
     def check_sectors_lost(self, current_time):
         if(self.fail_count < self.parity_fragments):
@@ -133,13 +137,15 @@ class Raid:
         # Any LSE will lead to data loss
 
         critical_region = self.get_critical_region(current_time)
+
         count = 0
         for disk in self.disks:
             if disk.is_failure() == True:
                 continue
             time = disk.get_scrubbing_time()
             # Should we take repair time into account?
-            count += disk.generate_sector_errors(time)
+            if random.random() < critical_region:
+                count += disk.generate_sector_errors(time)
 
         if count == 0:
             return 0

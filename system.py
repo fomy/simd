@@ -61,7 +61,7 @@ class System:
                 continue
 
             # Check whether the failed disk causes a RAID failure 
-            bytes_lost = self.raids[raid_idx].check_failure()
+            bytes_lost = self.raids[raid_idx].check_failure(self.system_time)
             if  bytes_lost > 0:
                 # We return immediately because this event is rare and serious
                 # It seems unnecessary to further check LSEs
