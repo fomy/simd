@@ -124,7 +124,7 @@ class Raid:
 
             self.logger.debug("RAID Failure")
 
-            r = get_critical_region(current_time)
+            r = self.get_critical_region(current_time)
 
             return self.disks[0].disk_capacity * Disk.SECTOR_SIZE * r * data_fraction
         return 0
