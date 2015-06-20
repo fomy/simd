@@ -6,6 +6,7 @@ class Weibull:
         self.shape = mpf(shape)
         self.scale = mpf(scale)
         self.location = mpf(location)
+        print shape,scale,location
 
     def draw(self):
         v = random.weibullvariate(self.scale, self.shape)
@@ -34,8 +35,12 @@ class Poisson:
         return k - 1 
 
 def test():
-    w = Weibull(1, 12, 0)
-    print w.draw()
+    #w = Weibull(1, 12, 0)
+    w = Weibull(1.2, 461386, 0)
+    v = 0
+    for i in range(100000):
+        v += w.draw()
+    print v/100000
 
 if __name__ == "__main__":
     test()

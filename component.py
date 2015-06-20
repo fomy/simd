@@ -13,8 +13,8 @@ class Disk:
 
     logger = logging.getLogger("sim")
 
-    def __init__(self, disk_capacity, disk_fail_parms, disk_repair_parms,
-            disk_lse_parms, disk_scrubbing_parms):
+    def __init__(self, disk_capacity=2147483648, disk_fail_parms=(1, 461386,0), disk_repair_parms=(1,12,0),
+            disk_lse_parms=(0.000108), disk_scrubbing_parms=(3,168.0,6)):
 
         # the capacity in byte is disk_capacity * SECTOR_SIZE
         self.disk_capacity = disk_capacity
@@ -183,4 +183,30 @@ class Raid:
             sys.exit(2)
 
 
+def test():
+    d = Disk()
+    t = 0.0
+    last_t = 0.0
 
+    fail_time = 0
+    repair_time = 0
+
+    i = 0
+
+    while t < 1000000000.0:
+        i += 1
+        (e, t) = d.get_next_event()
+        print e,t
+        if e == Disk.EVENT_FAIL:
+            d.fail(t)
+            fail_time += t - last_t
+        elif e == Disk.EVENT_REPAIR:
+            d.repair(t)
+            repair_time += t - last_t
+        else:
+            exit(2)
+        last_t = t
+    print i, fail_time, repair_time, fail_time/i*2, repair_time/i*2
+
+if __name__ == "__main__":
+    test()
