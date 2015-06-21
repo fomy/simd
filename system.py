@@ -82,8 +82,8 @@ class System:
                 sectors_lost.append(lse)
 
         # The mission concludes
-        if len(sectors_lost) == 1:
-            return [System.EVENT_NOTHING_LOST]
+        if len(sectors_lost) > 1:
+            # TO-DO: Waiting for deduplication model
+            return sectors_lost
 
-        # TO-DO: Waiting for deduplication model
-        return sectors_lost
+        return [System.EVENT_NOTHING_LOST]
