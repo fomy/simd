@@ -28,9 +28,10 @@ class Simulation:
         raid_failure_count = 0
         sector_error_count = 0
 
+        self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
+            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
+
         for i in range(self.iterations):
-            self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
-                self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
 
             result = self.system.run()
 
@@ -46,6 +47,8 @@ class Simulation:
                 sector_error_count += len(result) - 1
             else:
                 sys.exit(2)
+
+            self.system.reset()
         
         prob_result = None
         byte_result = None

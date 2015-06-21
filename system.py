@@ -22,6 +22,11 @@ class System:
         self.raids = [Raid(raid_type, disk_capacity, disk_fail_parms,
                 disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) for i in range(raid_num)]
 
+    def reset(self):
+        self.system_time = mpf(0)
+        for raid in self.raids:
+            raid.reset()
+
     def go_to_next_event(self):
         raid_idx = 0
         (disk_idx, event_type, event_time) = self.raids[0].get_next_event()

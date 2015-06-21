@@ -42,6 +42,12 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
         # When will the disk fail
         self.fail_time = self.disk_fail_dist.draw()
 
+    def reset(self):
+        self.state = Disk.STATE_OK
+        self.fail_time = self.disk_fail_dist.draw()
+        self.repair_time = mpf(0)
+        self.repair_start_time = mpf(0) 
+
     def is_failure(self):
         if self.state == Disk.STATE_OK:
             return False
@@ -92,10 +98,13 @@ class Raid:
         self.disks = [Disk(disk_capacity, disk_fail_parms, disk_repair_parms,
             disk_lse_parms, disk_scrubbing_parms) for i in range(self.data_fragments + self.parity_fragments)]
 
-        self.failed_disk_num = 0
-
         # the number of failed disks
         self.fail_count = 0
+
+    def reset(self):
+        self.fail_count = 0
+        for disk in self.disks:
+            disk.reset()
 
     def get_failed_disks(self):
         failed_disks = []
