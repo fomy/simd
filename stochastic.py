@@ -6,7 +6,6 @@ class Weibull:
         self.shape = mpf(shape)
         self.scale = mpf(scale)
         self.location = mpf(location)
-        print shape,scale,location
 
     def draw(self):
         v = random.weibullvariate(self.scale, self.shape)
