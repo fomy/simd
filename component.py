@@ -46,7 +46,7 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
         self.repair_start_time = mpf(0) 
 
     def is_failure(self):
-        return self.state != Disk.DISK_STATE_OK:
+        return self.state != Disk.DISK_STATE_OK
 
     # call it only when disk is failed
     def get_repair_process(self, current_time):
@@ -84,7 +84,7 @@ class Raid:
     logger = logging.getLogger("sim")
 
     # A RAID consists of many disks
-    def __init__(self, raid_type, disk_capacity=2147483648, disk_fail_parms,
+    def __init__(self, raid_type, disk_capacity, disk_fail_parms,
             disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
         # default is "mds_7_1"
         (self.type, d, p) = raid_type.split("_");
@@ -94,7 +94,7 @@ class Raid:
         # the capacity in byte is disk_capacity * SECTOR_SIZE
         self.disk_capacity = disk_capacity
 
-        self.logger.debug("RAID: raid_type = %s, data = %d, parity = %d, disk_capacity = $d" % (self.type, self.data_fragments, self.parity_fragments, self.disk_capacity))
+        self.logger.debug("RAID: raid_type = %s, data = %d, parity = %d, disk_capacity = %d" % (self.type, self.data_fragments, self.parity_fragments, self.disk_capacity))
 
         self.disks = [Disk(disk_fail_parms, disk_repair_parms,
             disk_lse_parms, disk_scrubbing_parms) for i in range(self.data_fragments + self.parity_fragments)]

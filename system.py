@@ -4,9 +4,9 @@ from mpmath import *
 from component import *
 
 class System:
-    EVENT_NOTHING_LOST = "Nothing Lost"
-    EVENT_RAID_FAILURE = "RAID Failure"
-    EVENT_SECTORS_LOST = "Sectors Lost"
+    RESULT_NOTHING_LOST = "Nothing Lost"
+    RESULT_RAID_FAILURE = "RAID Failure"
+    RESULT_SECTORS_LOST = "Sectors Lost"
 
     logger = logging.getLogger("sim")
 
@@ -45,12 +45,12 @@ class System:
         return (raid_idx, disk_idx, event_type, event_time)
 
     # Three possible returns
-    # [System.EVENT_NOTHING_LOST]
-    # [System.EVENT_RAID_FAILURE, bytes]
-    # [System.EVENT_SECTORS_LOST, lost1, lost2, ...]
+    # [System.RESULT_NOTHING_LOST]
+    # [System.RESULT_RAID_FAILURE, bytes]
+    # [System.RESULT_SECTORS_LOST, lost1, lost2, ...]
     def run(self):
 
-        sectors_lost = [System.EVENT_SECTORS_LOST]
+        sectors_lost = [System.RESULT_SECTORS_LOST]
 
         while True:
 
@@ -62,7 +62,7 @@ class System:
                 # mission complete
                 break
 
-            if event_type == Disk.EVENT_REPAIR:
+            if event_type == Disk.DISK_EVENT_REPAIR:
                 continue
 
             # Check whether the failed disk causes a RAID failure 
@@ -72,7 +72,7 @@ class System:
                 # It seems unnecessary to further check LSEs
                 # TO-DO: When deduplication model is ready, we need to amplify bytes_lost
                 # e.g., bytes_lost * deduplication factor
-                return [System.EVENT_RAID_FAILURE, bytes_lost]
+                return [System.RESULT_RAID_FAILURE, bytes_lost]
 
             # Check whether a LSE will cause a data loss
             # check_sectors_lost will return the bytes of sector lost
@@ -86,4 +86,4 @@ class System:
             # TO-DO: Waiting for deduplication model
             return sectors_lost
 
-        return [System.EVENT_NOTHING_LOST]
+        return [System.RESULT_NOTHING_LOST]
