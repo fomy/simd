@@ -69,9 +69,11 @@ def get_parms():
     # For failure, restore, and scrubbing, the parameters are (shape, scale, location)
 
     # data from [Elerath2009]
-    disk_fail_parms = (1.2, 461386.0, 0)
-    # data from [Elerath2014], SATA Disk A
-    #disk_fail_parms = (1.13, 302016.0, 0)
+    #disk_fail_parms = (1.2, 461386.0, 0)
+    #data from [Elerath2014], SATA Disk A
+    disk_fail_parms = (1.13, 302016.0, 0)
+    #data from [Elerath2014], SATA Disk B
+    #disk_fail_parms = (0.576, 4833522.0, 0)
 
     disk_repair_parms = None
     disk_lse_parms = None
@@ -159,17 +161,28 @@ def get_parms():
     # The following parameters may change with disk capacity
     if disk_repair_parms == None:
         # data from [Elerath2009]
-        disk_repair_parms = (1.0, 12.0, 0)
         #disk_repair_parms = (2.0, 12.0*factor, 6.0*factor)
+        #data from [Elerath2014] SATA Disk A
+        disk_repair_parms = (1.65, 22.7*factor, 0)
+        #data from [Elerath2014] SATA Disk B
+        #disk_repair_parms = (1.15, 20.25*factor, 0)
 
     if disk_lse_parms == None:
         # (rate)
         # data from [Elerath2009]
-        disk_lse_parms = (1.08/10000) 
+        #disk_lse_parms = (1.08/10000) 
+        #data from [Elerath2014] SATA Disk A
+        disk_lse_parms = (1.0/12325) 
+        #data from [Elerath2014] SATA Disk B
+        disk_lse_parms = (1.0/42857) 
 
     if disk_scrubbing_parms == None:
         # data from [Elerath2009]
-        disk_scrubbing_parms = (3, 168*factor, 6*factor)
+        #disk_scrubbing_parms = (3, 168*factor, 6*factor)
+        #data from [Elerath2014] SATA Disk A
+        disk_scrubbing_parms = (1, 186*factor, 0)
+        #data from [Elerath2014] SATA Disk B
+        #disk_scrubbing_parms = (0.97, 160*factor, 0)
    
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
@@ -193,12 +206,20 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
 
     (samples, raid_failure_count, sector_error_count) = simulation.simulate()
 
+    
+    (type, d, p) = raid_type.split("_");
+    data_fragments = int(d)
+
+    total_capacity = data_fragments * disk_capacity * raid_num * 512/1024/1024/1024/1024
+
     prob_result = (samples.prob_mean, 100*samples.prob_re, samples.prob_mean - samples.prob_ci, 
             samples.prob_mean + samples.prob_ci, samples.prob_dev)
     byte_result = (samples.byte_mean, 100*samples.byte_re, samples.byte_mean - samples.byte_ci, 
             samples.byte_mean + samples.byte_ci, samples.byte_dev)
     data_loss_event = raid_failure_count + sector_error_count
 
+    print "*******************"
+    print "System: %dTB data, %d of %s RAID, %d iterations" % (total_capacity, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
