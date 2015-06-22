@@ -33,6 +33,8 @@ class Simulation:
 
         for i in range(self.iterations):
 
+            self.system.reset()
+        
             result = self.system.run()
 
             if result[0] == System.RESULT_NOTHING_LOST:
@@ -48,8 +50,6 @@ class Simulation:
             else:
                 sys.exit(2)
 
-            self.system.reset()
-        
         prob_result = None
         byte_result = None
 

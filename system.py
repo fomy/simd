@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 from mpmath import *
 
 from component import *
@@ -15,34 +16,38 @@ class System:
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
         self.mission_time = mission_time
         self.raid_num = raid_num
-        self.system_time = mpf(0)
 
         self.logger.debug("System: mission_time = %d, raid_num = %d" % (self.mission_time, self.raid_num))
+
+        self.event_queue = None
 
         self.raids = [Raid(raid_type, disk_capacity, disk_fail_parms,
                 disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) for i in range(raid_num)]
 
     def reset(self):
-        self.system_time = mpf(0)
-        for raid in self.raids:
-            raid.reset()
+        self.event_queue = []
+        for r_idx in range(len(self.raids)):
+            self.event_queue.extend(self.raids[r_idx].reset(r_idx, self.mission_time))
+
+        self.event_queue = sorted(self.event_queue, reverse=True)
 
     def go_to_next_event(self):
-        raid_idx = 0
-        (disk_idx, event_type, event_time) = self.raids[0].get_next_event()
-        for r_idx in range(1, len(self.raids)):
-            (d_idx, type, time) = self.raids[r_idx].get_next_event()
-            if time < event_time:
-                event_time = time
-                event_type = type
-                disk_idx = d_idx
-                raid_idx = r_idx
+        if len(self.event_queue) == 0:
+            return None
+
+        (event_time, disk_idx, raid_idx) = self.event_queue.pop()
 
         # After update, the system state is consistent
-        self.system_time = event_time
-        self.raids[raid_idx].update_to_event(disk_idx, event_type, event_time)
+        (event_type, next_event_time) = self.raids[raid_idx].update_to_event(event_time, disk_idx)
+        if next_event_time <= self.mission_time:
+            self.event_queue.append((next_event_time, disk_idx, raid_idx))
+            size = len(self.event_queue)
+            if size >= 2 and self.event_queue[size - 1] > self.event_queue[size - 2]:
+                self.event_queue = sorted(self.event_queue, reverse=True)
+                #print event_type, self.event_queue
 
-        return (raid_idx, disk_idx, event_type, event_time)
+        self.logger.debug("raid_idx = %d, disk_idx = %d, event_type = %s, event_time = %d" % (raid_idx, disk_idx, event_type, event_time))
+        return (event_type, event_time, raid_idx)
 
     # Three possible returns
     # [System.RESULT_NOTHING_LOST]
@@ -54,19 +59,17 @@ class System:
 
         while True:
 
-            (raid_idx, disk_idx, event_type, event_time) = self.go_to_next_event()
-
-            self.logger.debug("raid_idx = %d, disk_idx = %d, event_type = %s, event_time = %d" % (raid_idx, disk_idx, event_type, event_time))
-
-            if event_time > self.mission_time:
-                # mission complete
+            e = self.go_to_next_event()
+            if e == None:
                 break
+
+            (event_type, event_time, raid_idx) = e
 
             if event_type == Disk.DISK_EVENT_REPAIR:
                 continue
 
             # Check whether the failed disk causes a RAID failure 
-            bytes_lost = self.raids[raid_idx].check_failure(self.system_time)
+            bytes_lost = self.raids[raid_idx].check_failure(event_time)
             if  bytes_lost > 0:
                 # We return immediately because this event is rare and serious
                 # It seems unnecessary to further check LSEs
@@ -77,7 +80,7 @@ class System:
             # Check whether a LSE will cause a data loss
             # check_sectors_lost will return the bytes of sector lost
             # We need to further amplify it according to our file system
-            lse = self.raids[raid_idx].check_sectors_lost(self.system_time)
+            lse = self.raids[raid_idx].check_sectors_lost(event_time)
             if lse > 0:
                 sectors_lost.append(lse)
 

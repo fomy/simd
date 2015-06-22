@@ -3,9 +3,9 @@ import random
 
 class Weibull:
     def __init__(self, shape, scale, location=0):
-        self.shape = mpf(shape)
-        self.scale = mpf(scale)
-        self.location = mpf(location)
+        self.shape = shape
+        self.scale = scale
+        self.location = location
 
     def draw(self):
         v = random.weibullvariate(self.scale, self.shape)

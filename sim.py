@@ -154,7 +154,7 @@ def get_parms():
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
-    factor = mpf(1) * disk_capacity / (2*1024*1024*1024)
+    factor = 1.0 * disk_capacity / (2*1024*1024*1024)
     # The following parameters may change with disk capacity
     if disk_repair_parms == None:
         # data from [Elerath2009]
@@ -164,7 +164,7 @@ def get_parms():
     if disk_lse_parms == None:
         # (rate)
         # data from [Elerath2009]
-        disk_lse_parms = (mpf(1.08)/10000) 
+        disk_lse_parms = (1.08/10000) 
 
     if disk_scrubbing_parms == None:
         # data from [Elerath2009]
