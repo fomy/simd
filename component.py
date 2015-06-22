@@ -3,25 +3,22 @@ from stochastic import *
 
 class Disk:
 
-    STATE_OK = "state ok"
-    STATE_FAILED = "state failed"
+    DISK_STATE_OK = "state ok"
+    DISK_STATE_FAILED = "state failed"
 
-    EVENT_FAIL = "event disk fail"
-    EVENT_REPAIR = "event disk repair"
+    DISK_EVENT_FAIL = "event disk fail"
+    DISK_EVENT_REPAIR = "event disk repair"
 
     SECTOR_SIZE = 512 # bytes
 
     logger = logging.getLogger("sim")
 
-    def __init__(self, disk_capacity=2147483648, disk_fail_parms=(1, 461386,0), disk_repair_parms=(1,12,0),
+    def __init__(self, disk_fail_parms=(1, 461386,0), disk_repair_parms=(1,12,0),
             disk_lse_parms=(0.000108), disk_scrubbing_parms=(3,168.0,6)):
 
-        # the capacity in byte is disk_capacity * SECTOR_SIZE
-        self.disk_capacity = disk_capacity
-
-        self.logger.debug("Disk: disk_capacity = %d, disk_fail_parms = %s, disk_repair_parms = %s, \
+        self.logger.debug("Disk: disk_fail_parms = %s, disk_repair_parms = %s, \
 disk_lse_parms = %s, disk_scrubbing_parms = %s" % 
-            (disk_capacity, str(disk_fail_parms), str(disk_repair_parms), str(disk_lse_parms), str(disk_scrubbing_parms)))
+            (str(disk_fail_parms), str(disk_repair_parms), str(disk_lse_parms), str(disk_scrubbing_parms)))
 
         (shape, scale, location) = disk_fail_parms
         self.disk_fail_dist = Weibull(shape, scale, location);
@@ -38,24 +35,23 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
         # When the repair starts
         self.repair_start_time = mpf(0) 
 
-        self.state = Disk.STATE_OK
+        self.state = Disk.DISK_STATE_OK
         # When will the disk fail
         self.fail_time = self.disk_fail_dist.draw()
 
     def reset(self):
-        self.state = Disk.STATE_OK
+        self.state = Disk.DISK_STATE_OK
         self.fail_time = self.disk_fail_dist.draw()
         self.repair_time = mpf(0)
         self.repair_start_time = mpf(0) 
 
     def is_failure(self):
-        if self.state == Disk.STATE_OK:
-            return False
-        return True
+        return self.state != Disk.DISK_STATE_OK:
 
+    # call it only when disk is failed
     def get_repair_process(self, current_time):
-        if self.state == Disk.STATE_OK:
-            return mpf(1)
+        #if self.state == Disk.DISK_STATE_OK:
+            #return mpf(1)
         return (current_time - self.repair_start_time)/(self.repair_time - self.repair_start_time)
 
     def get_scrubbing_time(self):
@@ -65,44 +61,50 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
         return self.disk_lse_dist.draw(time)
 
     def repair(self, current_time):
+        self.state = Disk.DISK_STATE_OK
+
         self.repair_time = mpf(0)
         self.repair_start_time = mpf(0)
-        self.state = Disk.STATE_OK
         self.fail_time = self.disk_fail_dist.draw() + current_time
 
     def fail(self, current_time):
-        self.state = Disk.STATE_FAILED
+        self.state = Disk.DISK_STATE_FAILED
+
         self.repair_time = self.disk_repair_dist.draw() + current_time
         self.repair_start_time = current_time
         self.fail_time = mpf(0)
 
     def get_next_event(self):
-        if self.state == Disk.STATE_OK:
-            return (Disk.EVENT_FAIL, self.fail_time)
-        return (Disk.EVENT_REPAIR, self.repair_time)
+        if self.state == Disk.DISK_STATE_OK:
+            return (Disk.DISK_EVENT_FAIL, self.fail_time)
+        return (Disk.DISK_EVENT_REPAIR, self.repair_time)
 
 class Raid:
 
     logger = logging.getLogger("sim")
 
     # A RAID consists of many disks
-    def __init__(self, raid_type, disk_capacity, disk_fail_parms,
+    def __init__(self, raid_type, disk_capacity=2147483648, disk_fail_parms,
             disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
         # default is "mds_7_1"
         (self.type, d, p) = raid_type.split("_");
         self.data_fragments = int(d)
         self.parity_fragments = int(p)
 
-        self.logger.debug("RAID: raid_type = %s, data = %d, parity = %d" % (self.type, self.data_fragments, self.parity_fragments))
+        # the capacity in byte is disk_capacity * SECTOR_SIZE
+        self.disk_capacity = disk_capacity
 
-        self.disks = [Disk(disk_capacity, disk_fail_parms, disk_repair_parms,
+        self.logger.debug("RAID: raid_type = %s, data = %d, parity = %d, disk_capacity = $d" % (self.type, self.data_fragments, self.parity_fragments, self.disk_capacity))
+
+        self.disks = [Disk(disk_fail_parms, disk_repair_parms,
             disk_lse_parms, disk_scrubbing_parms) for i in range(self.data_fragments + self.parity_fragments)]
 
         # the number of failed disks
-        self.fail_count = 0
+        # > 0 indicates the RAID is degraded
+        self.failed_disk_count = 0
 
     def reset(self):
-        self.fail_count = 0
+        self.failed_disk_count = 0
         for disk in self.disks:
             disk.reset()
 
@@ -126,7 +128,7 @@ class Raid:
 
     # Return bytes we lost if the RAID is failure 
     def check_failure(self, current_time):
-        if self.fail_count > self.parity_fragments:
+        if self.failed_disk_count > self.parity_fragments:
             # calculate the bytes lost if the RAID is failure
             # We assume the RAID is well rotated.
             data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
@@ -135,12 +137,12 @@ class Raid:
 
             r = self.get_critical_region(current_time)
 
-            return self.disks[0].disk_capacity * Disk.SECTOR_SIZE * r * data_fraction
+            return self.disk_capacity * Disk.SECTOR_SIZE * r * data_fraction
         return 0
 
             
     def check_sectors_lost(self, current_time):
-        if(self.fail_count < self.parity_fragments):
+        if(self.failed_disk_count < self.parity_fragments):
             return 0
         # No longer fault tolerent
         # Any LSE will lead to data loss
@@ -177,20 +179,19 @@ class Raid:
 
     def degrade(self, disk_idx, event_time):
         self.disks[disk_idx].fail(event_time);
-        self.fail_count += 1
+        self.failed_disk_count += 1
 
     def upgrade(self, disk_idx, event_time):
         self.disks[disk_idx].repair(event_time)
-        self.fail_count -= 1
+        self.failed_disk_count -= 1
 
     def update_to_event(self, disk_idx, event_type, event_time):
-        if event_type == Disk.EVENT_FAIL:
+        if event_type == Disk.DISK_EVENT_FAIL:
             self.degrade(disk_idx, event_time)
-        elif event_type == Disk.EVENT_REPAIR:
+        elif event_type == Disk.DISK_EVENT_REPAIR:
             self.upgrade(disk_idx, event_time)
         else:
             sys.exit(2)
-
 
 def test():
     d = Disk()
@@ -206,10 +207,10 @@ def test():
         i += 1
         (e, t) = d.get_next_event()
         print e,t
-        if e == Disk.EVENT_FAIL:
+        if e == Disk.DISK_EVENT_FAIL:
             d.fail(t)
             fail_time += t - last_t
-        elif e == Disk.EVENT_REPAIR:
+        elif e == Disk.DISK_EVENT_REPAIR:
             d.repair(t)
             repair_time += t - last_t
         else:
