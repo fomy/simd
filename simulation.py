@@ -54,16 +54,8 @@ class Simulation:
         byte_result = None
 
         samples = Samples(sample_list)
-        byte_result = samples.getResults()
-
-        for i in range(len(sample_list)):
-            if sample_list[i] > 0:
-                sample_list[i] = 1
-
-        samples = Samples(sample_list)
-        prob_result = samples.getResults()
+        samples.calcResults()
 
         # finished, return results
         # the format of result:
-        # (mean, re, low_ci, high_ci)
-        return (prob_result, byte_result, raid_failure_count, sector_error_count) 
+        return (samples, raid_failure_count, sector_error_count)

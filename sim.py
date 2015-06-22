@@ -6,6 +6,7 @@ from numpy import random
 import getopt
 
 from simulation import *
+from statistics import *
 
 def usage(arg):
     print arg, ": -h [--help] -l [--log] -m <mission_time> [--mission_time <mission_time>]"
@@ -190,8 +191,12 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
 
-    (prob_result, byte_result, raid_failure_count, sector_error_count) = simulation.simulate()
+    (samples, raid_failure_count, sector_error_count) = simulation.simulate()
 
+    prob_result = (samples.prob_mean, 100*samples.prob_re, samples.prob_mean - samples.prob_ci, 
+            samples.prob_mean + samples.prob_ci, samples.prob_dev)
+    byte_result = (samples.byte_mean, 100*samples.byte_re, samples.byte_mean - samples.byte_ci, 
+            samples.byte_mean + samples.byte_ci, samples.byte_dev)
     data_loss_event = raid_failure_count + sector_error_count
 
     print "*******************"
