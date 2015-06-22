@@ -1,5 +1,6 @@
 import logging
 from stochastic import *
+from bm_ops import *
 
 class Disk:
 
@@ -52,7 +53,7 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
     def get_repair_process(self, current_time):
         #if self.state == Disk.DISK_STATE_OK:
             #return mpf(1)
-        return (current_time - self.repair_start_time)/(self.repair_time - self.repair_start_time)
+        return (mpf(1) * current_time - self.repair_start_time)/(self.repair_time - self.repair_start_time)
 
     def get_scrubbing_time(self):
         return self.disk_scrubbing_dist.draw()
@@ -102,60 +103,52 @@ class Raid:
         # the number of failed disks
         # > 0 indicates the RAID is degraded
         self.failed_disk_count = 0
+        self.failed_disk_bitmap = 0
+
+        self.critical_region = mpf(0)
 
     def reset(self):
         self.failed_disk_count = 0
+        self.failed_disk_bitmap = 0
+        self.critical_region = mpf(0)
         for disk in self.disks:
             disk.reset()
 
-    def get_failed_disks(self):
-        failed_disks = []
-        for disk in self.disks:
-            if disk.is_failure() == True:
-                failed_disks.append(disk)
-        return failed_disks
-
     # the region where data may loss
-    def get_critical_region(self, current_time):
-        region = 1.0
-        for disk in self.disks:
-            if disk.is_failure() == False:
-                continue
-            r = 1 - disk.get_repair_process(current_time)
-            if r < region:
-                region = r
-        return region
+    def calc_critical_region(self, current_time):
+        failed_disk_idx = bm_to_list(self.failed_disk_bitmap)
+        self.critical_region = mpf(1.0)
+        for idx in failed_disk_idx:
+            r = mpf(1.0) - self.disks[idx].get_repair_process(current_time)
+            if r < self.critical_region:
+                self.critical_region = r
 
     # Return bytes we lost if the RAID is failure 
     def check_failure(self, current_time):
-        if self.failed_disk_count > self.parity_fragments:
-            # calculate the bytes lost if the RAID is failure
-            # We assume the RAID is well rotated.
-            data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
+        if self.failed_disk_count <= self.parity_fragments:
+            return 0
 
-            self.logger.debug("RAID Failure")
+        # calculate the bytes lost if the RAID is failure
+        # We assume the RAID is well rotated.
+        data_fraction = mpf(1) * self.data_fragments / (self.data_fragments + self.parity_fragments)
 
-            r = self.get_critical_region(current_time)
+        self.logger.debug("RAID Failure")
 
-            return self.disk_capacity * Disk.SECTOR_SIZE * r * data_fraction
-        return 0
-
+        return self.disk_capacity * Disk.SECTOR_SIZE * self.critical_region * data_fraction
             
     def check_sectors_lost(self, current_time):
-        if(self.failed_disk_count < self.parity_fragments):
+        if self.failed_disk_count < self.parity_fragments:
             return 0
         # No longer fault tolerent
         # Any LSE will lead to data loss
-
-        critical_region = self.get_critical_region(current_time)
 
         count = 0
         for disk in self.disks:
             if disk.is_failure() == True:
                 continue
-            time = disk.get_scrubbing_time()
             # Should we take repair time into account?
-            if random.random() < critical_region:
+            if random.random() < self.critical_region:
+                time = disk.get_scrubbing_time()
                 count += disk.generate_sector_errors(time)
 
         if count == 0:
@@ -180,10 +173,15 @@ class Raid:
     def degrade(self, disk_idx, event_time):
         self.disks[disk_idx].fail(event_time);
         self.failed_disk_count += 1
+        self.failed_disk_bitmap = bm_insert(self.failed_disk_bitmap, disk_idx)
+        if self.failed_disk_count >= self.parity_fragments:
+            self.calc_critical_region(event_time)
 
     def upgrade(self, disk_idx, event_time):
         self.disks[disk_idx].repair(event_time)
         self.failed_disk_count -= 1
+        self.failed_disk_bitmap = bm_rm(self.failed_disk_bitmap, disk_idx)
+        self.critical_region = mpf(0)
 
     def update_to_event(self, disk_idx, event_type, event_time):
         if event_type == Disk.DISK_EVENT_FAIL:
