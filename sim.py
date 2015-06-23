@@ -65,25 +65,21 @@ def get_parms():
     # 512 bytes for each sector
     # So the default is 1TB
     disk_capacity = 2*1024*1024*1024
+    #disk_capacity = 4*1024*1024*1024
+    #disk_capacity = 1024*1024*1024
 
-    # For failure, restore, and scrubbing, the parameters are (shape, scale, location)
-
-    # data from [Elerath2009]
-    #disk_fail_parms = (1.2, 461386.0, 0)
-    #data from [Elerath2014], SATA Disk A
-    disk_fail_parms = (1.13, 302016.0, 0)
-    #data from [Elerath2014], SATA Disk B
-    #disk_fail_parms = (0.576, 4833522.0, 0)
-
+    parms = "Elerath2014A"
+    disk_fail_parms = None 
     disk_repair_parms = None
     disk_lse_parms = None
     disk_scrubbing_parms = None
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:F:R:L:S:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
+                                                                             "parameters", 
                                                                              "disk_fail_dist",
                                                                              "disk_repair_dist",
                                                                              "disk_lse_dist",
@@ -154,36 +150,42 @@ def get_parms():
                  
         elif o in ("-c", "--capacity"):
             disk_capacity = int(a) 
+        elif o in ("-p", "--parameters"):
+            parms = a
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
     factor = 1.0 * disk_capacity / (2*1024*1024*1024)
+
     # The following parameters may change with disk capacity
-    if disk_repair_parms == None:
-        # data from [Elerath2009]
-        #disk_repair_parms = (2.0, 12.0*factor, 6.0*factor)
-        #data from [Elerath2014] SATA Disk A
-        disk_repair_parms = (1.65, 22.7*factor, 0)
-        #data from [Elerath2014] SATA Disk B
-        #disk_repair_parms = (1.15, 20.25*factor, 0)
+    # For failure, restore, and scrubbing, the parameters are (shape, scale, location)
 
-    if disk_lse_parms == None:
-        # (rate)
+    if disk_fail_parms != None and disk_repair_parms != None and disk_lse_parms != None and disk_scrubbing_dist != None:
+            parms = None
+
+    if parms == "Elerath2009":
         # data from [Elerath2009]
-        #disk_lse_parms = (1.08/10000) 
-        #data from [Elerath2014] SATA Disk A
+        disk_fail_parms = (1.2, 461386.0, 0)
+        disk_repair_parms = (2.0, 12.0 * factor, 6.0 * factor)
+        disk_lse_parms = (1.08/10000) 
+        disk_scrubbing_parms = (3, 168 * factor, 6 * factor)
+    elif parms == "Elerath2014A":
+        #data from [Elerath2014], SATA Disk A
+        disk_fail_parms = (1.13, 302016.0, 0)
+        disk_repair_parms = (1.65, 22.7 * factor, 0)
         disk_lse_parms = (1.0/12325) 
-        #data from [Elerath2014] SATA Disk B
+        disk_scrubbing_parms = (1, 186 * factor, 0)
+    elif parms == "Elerath2014B":
+        #data from [Elerath2014], SATA Disk B
+        disk_fail_parms = (0.576, 4833522.0, 0)
+        disk_repair_parms = (1.15, 20.25*factor, 0)
         disk_lse_parms = (1.0/42857) 
-
-    if disk_scrubbing_parms == None:
-        # data from [Elerath2009]
-        #disk_scrubbing_parms = (3, 168*factor, 6*factor)
-        #data from [Elerath2014] SATA Disk A
-        disk_scrubbing_parms = (1, 186*factor, 0)
-        #data from [Elerath2014] SATA Disk B
-        #disk_scrubbing_parms = (0.97, 160*factor, 0)
-   
+        disk_scrubbing_parms = (0.97, 160*factor, 0)
+    else:
+        if parms != None:
+            usage(sys.argv[0])
+            print "Invaid parms"
+            exit(2)
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)             
