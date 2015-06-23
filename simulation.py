@@ -33,6 +33,9 @@ class Simulation:
 
         for i in range(self.iterations):
 
+            if (i+1) % 10000 == 0:
+                self.logger.warning("complete %d iterations" % i)
+
             self.system.reset()
         
             result = self.system.run()
@@ -40,7 +43,7 @@ class Simulation:
             if result[0] == System.RESULT_NOTHING_LOST:
                 sample_list.append(0)
             elif result[0] == System.RESULT_RAID_FAILURE:
-                self.logger.warning("%dth iteration: %s, %d bytes lost" % (i, result[0], result[1]))
+                self.logger.debug("%dth iteration: %s, %d bytes lost" % (i, result[0], result[1]))
                 sample_list.append(result[1])
                 raid_failure_count += 1
             elif result[0] == System.RESULT_SECTORS_LOST:
