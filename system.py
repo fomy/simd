@@ -5,9 +5,9 @@ from mpmath import *
 from component import *
 
 class System:
-    RESULT_NOTHING_LOST = "Nothing Lost"
-    RESULT_RAID_FAILURE = "RAID Failure"
-    RESULT_SECTORS_LOST = "Sectors Lost"
+    RESULT_NOTHING_LOST = 0 # "Nothing Lost"
+    RESULT_RAID_FAILURE = 1 #"RAID Failure"
+    RESULT_SECTORS_LOST = 2 #"Sectors Lost"
 
     logger = logging.getLogger("sim")
 

@@ -42,13 +42,14 @@ class Simulation:
             result = self.system.run()
 
             if result[0] == System.RESULT_NOTHING_LOST:
-                sample_list.append(0)
+                #sample_list.append(0)
+                self.logger.debug("%dth iteration: nothing lost")
             elif result[0] == System.RESULT_RAID_FAILURE:
-                self.logger.debug("%dth iteration: %s, %d bytes lost" % (i, result[0], result[1]))
+                self.logger.debug("%dth iteration: %s, %d bytes lost" % (i, "RAID Failure", result[1]))
                 sample_list.append(result[1])
                 raid_failure_count += 1
             elif result[0] == System.RESULT_SECTORS_LOST:
-                self.logger.debug("%dth iterations: %s, %d bytes lost" % (i, result[0], sum(result[1:])))
+                self.logger.debug("%dth iterations: %s, %d bytes lost" % (i, "Sectors Lost", sum(result[1:])))
                 sample_list.append(sum(result[1:]))
                 sector_error_count += len(result) - 1
             else:
@@ -60,7 +61,7 @@ class Simulation:
         samples = Samples()
         localtime = time.asctime(time.localtime(time.time()))
         self.logger.warning("%s : all iterations finish: calculating results" % localtime)
-        samples.calcResults("0.90", sample_list)
+        samples.calcResults("0.90", sample_list, self.iterations)
 
         # finished, return results
         # the format of result:

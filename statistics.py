@@ -59,17 +59,13 @@ class Samples:
     # Calculate the standard deviation based on the samples for this instance
     #
     def calcStdDev(self, samples):
-        
         if self.byte_dev == None:
             self.calcMean()
-            sum_1 = mpf(0)
-            sum_2 = mpf(0)
+            sum_1 = (self.num_samples - len(samples)) * abs(power(0 - self.byte_mean, 2))
             for sample in samples:
                 sum_1 += abs(power(sample - self.byte_mean, 2))
-                if sample > 0:
-                    sum_2 += abs(power(1 - self.prob_mean, 2))
-                else:
-                    sum_2 += abs(power(0 - self.prob_mean, 2))
+
+            sum_2 = (self.num_samples - len(samples)) * abs(power(0 - self.prob_mean, 2)) + len(samples) * abs(power(1 - self.prob_mean, 2))
 
     
             self.byte_dev = sqrt((mpf(1)/(self.num_samples-1)) * sum_1)
@@ -106,13 +102,13 @@ class Samples:
         self.byte_re = self.byte_ci / self.byte_mean
         self.prob_re = self.prob_ci / self.prob_mean
 
-    def calcResults(self, conf_level, samples):
+    # zeros have been eliminated
+    def calcResults(self, conf_level, samples, sample_num):
+        self.num_samples = sample_num
+        self.prob_sum += len(samples)
         for sample in samples:
             self.byte_sum += sample
-            if sample > 0:
-                self.prob_sum += 1
 
-        self.num_samples = len(samples)
         self.calcRE(conf_level, samples)
     
 #
@@ -127,7 +123,8 @@ def test():
     for i in range(num_samples):
         samples.append(random.gauss(mean, std_dev))
 
-    s = Samples(samples)    
+    s = Samples(1000)    
+    s.calcResults("0.9", samples)
         
     print "Mean: %s (%s): " % (s.calcMean(), mean)
     print "Std Dev: %s (%s): " % (s.calcStdDev(), std_dev)
