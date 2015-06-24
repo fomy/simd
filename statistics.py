@@ -19,17 +19,12 @@ class Samples:
     #
     # @param samples: a set of samples, most observed in simulation
     #
-    def __init__(self, samples):
-        self.samples = samples
+    def __init__(self):
 
         self.byte_sum = mpf(0)
         self.prob_sum = mpf(0)
-        for sample in samples:
-            self.byte_sum += sample
-            if sample > 0:
-                self.prob_sum += 1
 
-        self.num_samples = len(self.samples)
+        self.num_samples = 0
 
         # 
         # A static table used to estimate the confidence 
@@ -63,13 +58,13 @@ class Samples:
     #
     # Calculate the standard deviation based on the samples for this instance
     #
-    def calcStdDev(self):
+    def calcStdDev(self, samples):
         
         if self.byte_dev == None:
             self.calcMean()
             sum_1 = mpf(0)
             sum_2 = mpf(0)
-            for sample in self.samples:
+            for sample in samples:
                 sum_1 += abs(power(sample - self.byte_mean, 2))
                 if sample > 0:
                     sum_2 += abs(power(1 - self.prob_mean, 2))
@@ -86,13 +81,13 @@ class Samples:
     #
     # @param conf_level: the probability that the mean falls within the interval
     #
-    def calcConfInterval(self, conf_level="0.90"):
+    def calcConfInterval(self, conf_level, samples):
         
         if conf_level not in self.conf_lvl_lku.keys():
             print "%s not a valid confidence level!" % conf_level
             return None
     
-        self.calcStdDev()
+        self.calcStdDev(samples)
 
         self.byte_ci = abs(self.conf_lvl_lku[conf_level] * (self.byte_dev / sqrt(self.num_samples)))
         self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / sqrt(self.num_samples)))
@@ -102,17 +97,23 @@ class Samples:
     #
     # self.conf_lvl_lku[conf_level] * sqrt(Var)/sqrt(num_samples) / mean
     #
-    def calcRE(self, conf_level="0.90"):
+    def calcRE(self, conf_level, samples):
         if self.byte_mean == 0:
             return None
         
-        self.calcConfInterval()
+        self.calcConfInterval(conf_level, samples)
 
         self.byte_re = self.byte_ci / self.byte_mean
         self.prob_re = self.prob_ci / self.prob_mean
 
-    def calcResults(self, conf_level="0.90"):
-        self.calcRE(conf_level)
+    def calcResults(self, conf_level, samples):
+        for sample in samples:
+            self.byte_sum += sample
+            if sample > 0:
+                self.prob_sum += 1
+
+        self.num_samples = len(samples)
+        self.calcRE(conf_level, samples)
     
 #
 # Generate samples from a known distribution and verify the statistics

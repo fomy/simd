@@ -1,4 +1,5 @@
 import logging
+import time
 
 from system import *
 from statistics import *
@@ -33,7 +34,7 @@ class Simulation:
 
         for i in range(self.iterations):
 
-            if (i+1) % 10000 == 0:
+            if (i+1) % 100000 == 0:
                 self.logger.warning("complete %d iterations" % i)
 
             self.system.reset()
@@ -56,8 +57,10 @@ class Simulation:
         prob_result = None
         byte_result = None
 
-        samples = Samples(sample_list)
-        samples.calcResults()
+        samples = Samples()
+        localtime = time.asctime(time.localtime(time.time()))
+        self.logger.warning("%s : all iterations finish: calculating results" % localtime)
+        samples.calcResults("0.90", sample_list)
 
         # finished, return results
         # the format of result:

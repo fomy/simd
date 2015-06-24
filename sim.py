@@ -1,4 +1,4 @@
-import os
+import time
 import sys
 import logging
 from mpmath import *
@@ -220,8 +220,9 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
             samples.byte_mean + samples.byte_ci, samples.byte_dev)
     data_loss_event = raid_failure_count + sector_error_count
 
+    localtime = time.asctime(time.localtime(time.time()))
     print "*******************"
-    print "System: %dTB data, %d of %s RAID, %d iterations" % (total_capacity, raid_num, raid_type, iterations)
+    print "System-%s: %dTB data, %d of %s RAID, %d iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
