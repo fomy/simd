@@ -66,9 +66,10 @@ class Simulation:
         byte_result = None
 
         samples = Samples()
-        localtime = time.asctime(time.localtime(time.time()))
-        self.logger.warning("%s : all iterations finish: calculating results" % localtime)
+        stime = time.clock()
         samples.calcResults("0.90", sample_list, self.iterations)
+        t = time.clock() - stime
+        print >> sys.stderr, "Result analysis takes %f Sec" % t
 
         # finished, return results
         # the format of result:

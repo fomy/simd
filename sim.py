@@ -221,7 +221,7 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
 
     localtime = time.asctime(time.localtime(time.time()))
     print "*******************"
-    print "System-%s: %dTB data, %d of %s RAID, %ld iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
+    print "System (%s): %dTB data, %d of %s RAID, %ld iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
