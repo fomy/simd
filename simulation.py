@@ -36,7 +36,7 @@ class Simulation:
         while i < self.iterations:
 
             if (i+1) % 100000 == 0:
-                self.logger.warning("complete %d iterations" % i)
+                self.logger.warning("complete %ld iterations" % i)
 
             self.system.reset()
         

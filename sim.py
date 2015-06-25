@@ -11,7 +11,7 @@ from statistics import *
 def usage(arg):
     print arg, ": -h [--help] -l [--log] -m <mission_time> [--mission_time <mission_time>]"
     print "-i <num_iterations> [--iterations <num_iterations>] -r <raid_type> [--raid <raid_type>]"
-    print "-n <num_raids> [--raid_num <num_raids>] -c <disk_capacity> [--capacity <disk_capacity>]"
+    print "-n <num_raids> [--raid_num <num_raids>] -c <capacity_factor> [--capacity <capacity_factor>]"
     print "-F <disk_fail_dist> [--disk_fail_dist <disk_fail_dist>]"
     print "-R <disk_repair_dist> [--disk_repair_dist <disk_repair_dist>]"
     print "-L <disk_lse_dist> [--disk_lse_dist <disk_lse_dist>]"
@@ -26,7 +26,7 @@ def usage(arg):
     print ""
     print "num_raids = number of raids in the system, defaut is 1"
     print ""
-    print "disk_capacity = number of sectors in a disk, defaut is 2*1024*1024*1024 (1TB)"
+    print "capacity_factor = the disk capacity factor, defaut is 1 (2*1024*1024*1024 sectors (1TB)),"
     print ""
     print "disk_fail_dist = \"(shape = 1.2, scale = 461386 by default)\" OR"
     print "                      \"(scale)\" OR"
@@ -64,9 +64,8 @@ def get_parms():
     # the number of sectors in each disk
     # 512 bytes for each sector
     # So the default is 1TB
-    #disk_capacity = 2*1024*1024*1024L
-    disk_capacity = 4*1024*1024*1024L
-    #disk_capacity = 1024*1024*1024L
+    disk_capacity = 2*1024*1024*1024L
+    capacity_factor = 1.0
 
     parms = "Elerath2014A"
     disk_fail_parms = None 
@@ -149,13 +148,13 @@ def get_parms():
             raid_num = int(a) 
                  
         elif o in ("-c", "--capacity"):
-            disk_capacity = long(a) 
+            capacity_factor = float(a)
         elif o in ("-p", "--parameters"):
             parms = a
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
-    factor = 1.0 * disk_capacity / (2*1024*1024*1024)
+    disk_capacity *= capacity_factor
 
     # The following parameters may change with disk capacity
     # For failure, restore, and scrubbing, the parameters are (shape, scale, location)
@@ -166,21 +165,21 @@ def get_parms():
     if parms == "Elerath2009":
         # data from [Elerath2009]
         disk_fail_parms = (1.2, 461386.0, 0)
-        disk_repair_parms = (2.0, 12.0 * factor, 6.0 * factor)
+        disk_repair_parms = (2.0, 12.0 * capacity_factor, 6.0 * capacity_factor)
         disk_lse_parms = (1.08/10000) 
-        disk_scrubbing_parms = (3, 168 * factor, 6 * factor)
+        disk_scrubbing_parms = (3, 168 * capacity_factor, 6 * capacity_factor)
     elif parms == "Elerath2014A":
         #data from [Elerath2014], SATA Disk A
         disk_fail_parms = (1.13, 302016.0, 0)
-        disk_repair_parms = (1.65, 22.7 * factor, 0)
+        disk_repair_parms = (1.65, 22.7 * capacity_factor, 0)
         disk_lse_parms = (1.0/12325) 
-        disk_scrubbing_parms = (1, 186 * factor, 0)
+        disk_scrubbing_parms = (1, 186 * capacity_factor, 0)
     elif parms == "Elerath2014B":
         #data from [Elerath2014], SATA Disk B
         disk_fail_parms = (0.576, 4833522.0, 0)
-        disk_repair_parms = (1.15, 20.25*factor, 0)
+        disk_repair_parms = (1.15, 20.25 * capacity_factor, 0)
         disk_lse_parms = (1.0/42857) 
-        disk_scrubbing_parms = (0.97, 160*factor, 0)
+        disk_scrubbing_parms = (0.97, 160 * capacity_factor, 0)
     else:
         if parms != None:
             usage(sys.argv[0])
@@ -197,7 +196,7 @@ def do_it():
     (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) = get_parms()
 
-    logger.debug("Parameters: mission time = %d, iterations = %d, raid_type = %s, raid_num = %d, \
+    logger.debug("Parameters: mission time = %d, iterations = %ld, raid_type = %s, raid_num = %d, \
 disk_capacity = %d, disk_fail_parms = %s, disk_repair_parms = %s, \
 disk_lse_parms = %s, disk_scrubbing_parms = %s" % 
             (mission_time, iterations, raid_type, raid_num, disk_capacity, 
@@ -222,7 +221,7 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
 
     localtime = time.asctime(time.localtime(time.time()))
     print "*******************"
-    print "System-%s: %dTB data, %d of %s RAID, %d iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
+    print "System-%s: %dTB data, %d of %s RAID, %ld iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
