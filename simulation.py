@@ -36,7 +36,7 @@ class Simulation:
         start_time = datetime.datetime.now()
         for i in xrange(self.iterations):
 
-            if i % 10000 == 0:
+            if i % 15000 == 0:
                 process = 1.0*i/self.iterations
                 num = int(process * 100)
                 delta = datetime.datetime.now() - start_time
