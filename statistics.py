@@ -94,13 +94,15 @@ class Samples:
     # self.conf_lvl_lku[conf_level] * sqrt(Var)/sqrt(num_samples) / mean
     #
     def calcRE(self, conf_level, samples):
-        if self.byte_mean == 0:
-            return None
         
         self.calcConfInterval(conf_level, samples)
 
-        self.byte_re = self.byte_ci / self.byte_mean
-        self.prob_re = self.prob_ci / self.prob_mean
+        if self.byte_mean == 0:
+            self.byte_re = 0
+            self.prob_re = 0
+        else:
+            self.byte_re = self.byte_ci / self.byte_mean
+            self.prob_re = self.prob_ci / self.prob_mean
 
     # zeros have been eliminated
     def calcResults(self, conf_level, samples, sample_num):
