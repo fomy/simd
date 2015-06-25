@@ -1,3 +1,4 @@
+import sys
 import logging
 import time
 
@@ -32,11 +33,14 @@ class Simulation:
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
             self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
 
-        i = 0L
-        while i < self.iterations:
+        stime = time.clock()
+        for i in xrange(self.iterations):
 
-            if (i+1) % 100000 == 0:
-                self.logger.warning("complete %ld iterations" % i)
+            if i % 10000 == 0:
+                process = 1.0*i/self.iterations
+                num = int(process * 100)
+                t = time.clock() - stime
+                print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%5.f Sec\r"%t,
 
             self.system.reset()
         
@@ -56,7 +60,7 @@ class Simulation:
             else:
                 sys.exit(2)
 
-            i += 1
+        print >> sys.stderr,  "%6.2f%%: [" % 100.0, "\b= "*100, "\b\b>", "\b]", "%5.f Sec"%t
 
         prob_result = None
         byte_result = None
