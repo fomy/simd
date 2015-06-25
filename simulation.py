@@ -1,6 +1,6 @@
 import sys
 import logging
-import time
+import datetime
 
 from system import *
 from statistics import *
@@ -33,14 +33,18 @@ class Simulation:
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
             self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
 
-        stime = time.clock()
+        start_time = datetime.datetime.now()
         for i in xrange(self.iterations):
 
             if i % 10000 == 0:
                 process = 1.0*i/self.iterations
                 num = int(process * 100)
-                t = time.clock() - stime
-                print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%5.f Sec\r"%t,
+                delta = datetime.datetime.now() - start_time
+                d = delta.days
+                s = delta.seconds % 60
+                m = (delta.seconds / 60) % 60
+                h = m / 60
+                print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%3dd%2dh%2dm%2ds \r"% (d,h,m,s),
 
             self.system.reset()
         
