@@ -41,9 +41,9 @@ class Simulation:
                 num = int(process * 100)
                 delta = datetime.datetime.now() - start_time
                 d = delta.days
-                s = delta.seconds % 60
-                m = (delta.seconds / 60) % 60
-                h = m / 60
+                s = delta.seconds%60
+                m = (delta.seconds/60)%60
+                h = delta.seconds/60/60
                 print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%3dd%2dh%2dm%2ds \r"% (d,h,m,s),
 
             self.system.reset()
