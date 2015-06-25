@@ -55,7 +55,7 @@ def get_parms():
     # 87600 hours, for 10 years
     mission_time = 87600
     # more iterations, more accurate estimate
-    iterations = 10000
+    iterations = 10000L
     # the data/parity configuration
     # such as mds_7_1
     raid_type = "mds_7_1"
@@ -64,9 +64,9 @@ def get_parms():
     # the number of sectors in each disk
     # 512 bytes for each sector
     # So the default is 1TB
-    disk_capacity = 2*1024*1024*1024
-    #disk_capacity = 4*1024*1024*1024
-    #disk_capacity = 1024*1024*1024
+    #disk_capacity = 2*1024*1024*1024L
+    disk_capacity = 4*1024*1024*1024L
+    #disk_capacity = 1024*1024*1024L
 
     parms = "Elerath2014A"
     disk_fail_parms = None 
@@ -140,7 +140,7 @@ def get_parms():
             mission_time = float(a) 
 
         elif o in ("-i", "--iterations"):
-            iterations = int(a) 
+            iterations = long(a) 
 
         elif o in ("-r", "--raid"):
             raid_type = a 
@@ -149,7 +149,7 @@ def get_parms():
             raid_num = int(a) 
                  
         elif o in ("-c", "--capacity"):
-            disk_capacity = int(a) 
+            disk_capacity = long(a) 
         elif o in ("-p", "--parameters"):
             parms = a
 

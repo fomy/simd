@@ -32,7 +32,8 @@ class Simulation:
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
             self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
 
-        for i in range(self.iterations):
+        i = 0L
+        while i < self.iterations:
 
             if (i+1) % 100000 == 0:
                 self.logger.warning("complete %d iterations" % i)
@@ -54,6 +55,8 @@ class Simulation:
                 sector_error_count += len(result) - 1
             else:
                 sys.exit(2)
+
+            i += 1
 
         prob_result = None
         byte_result = None
