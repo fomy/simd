@@ -1,6 +1,7 @@
 import sys
 import logging
 import datetime
+import time
 
 from system import *
 from statistics import *
@@ -64,7 +65,7 @@ class Simulation:
             else:
                 sys.exit(2)
 
-        print >> sys.stderr,  "%6.2f%%: [" % 100.0, "\b= "*100, "\b\b>", "\b]", "%5.f Sec"%t
+        print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%3dd%2dh%2dm%2ds"% (d,h,m,s)
 
         prob_result = None
         byte_result = None
