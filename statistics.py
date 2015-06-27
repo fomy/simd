@@ -22,6 +22,7 @@ class Samples:
     def __init__(self):
 
         self.byte_sum = mpf(0)
+        self.byte2_sum = mpf(0)
         self.prob_sum = mpf(0)
 
         self.num_samples = 0
@@ -38,38 +39,51 @@ class Samples:
         self.conf_lvl_lku["0.995"] = mpf(2.801)
 
         self.byte_mean = None
+        self.byte_mean2 = None
         self.byte_dev = None
         self.byte_ci = None
         self.byte_re = None
 
         # used to calculate the probability of data loss
         self.prob_mean = None
+        self.prob_mean2 = None
         self.prob_dev = None
         self.prob_ci = None
         self.prob_re = None
         
+    # only non-zeros in samples, num shows the actual number of samples */
+    def addSamples(self, samples, num):
+        for sample in samples:
+            self.byte_sum += sample
+            self.byte2_sum += power(sample, 2)
+            self.prob_sum += 1
+
+        self.num_samples += num 
+
+    def addSample(self, sample):
+        if sample > 0:
+            self.byte_sum += sample
+            self.byte2_sum += power(sample, 2)
+            self.prob_sum += 1
+
+        self.num_samples += 1
+
     #
     # Calculate the sample mean based on the samples for this instance
     #
     def calcMean(self):
         self.byte_mean = self.byte_sum / self.num_samples
+        self.byte2_mean = self.byte2_sum / self.num_samples
         self.prob_mean = self.prob_sum / self.num_samples
 
     #
     # Calculate the standard deviation based on the samples for this instance
+    # dev = E(X-EX)^2 = EX^2 - (EX)^2
     #
-    def calcStdDev(self, samples):
-        if self.byte_dev == None:
-            self.calcMean()
-            sum_1 = (self.num_samples - len(samples)) * abs(power(0 - self.byte_mean, 2))
-            for sample in samples:
-                sum_1 += abs(power(sample - self.byte_mean, 2))
-
-            sum_2 = (self.num_samples - len(samples)) * abs(power(0 - self.prob_mean, 2)) + len(samples) * abs(power(1 - self.prob_mean, 2))
-
-    
-            self.byte_dev = sqrt((mpf(1)/(self.num_samples-1)) * sum_1)
-            self.prob_dev = sqrt((mpf(1)/(self.num_samples-1)) * sum_2)
+    def calcStdDev(self ):
+        self.calcMean()
+        self.byte_dev = sqrt(self.byte2_mean - power(self.byte_mean, 2))
+        self.prob_dev = sqrt(self.prob_mean - power(self.prob_mean, 2))
 
 
     #
@@ -77,13 +91,13 @@ class Samples:
     #
     # @param conf_level: the probability that the mean falls within the interval
     #
-    def calcConfInterval(self, conf_level, samples):
+    def calcConfInterval(self, conf_level):
         
         if conf_level not in self.conf_lvl_lku.keys():
             print "%s not a valid confidence level!" % conf_level
             return None
     
-        self.calcStdDev(samples)
+        self.calcStdDev()
 
         self.byte_ci = abs(self.conf_lvl_lku[conf_level] * (self.byte_dev / sqrt(self.num_samples)))
         self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / sqrt(self.num_samples)))
@@ -93,9 +107,9 @@ class Samples:
     #
     # self.conf_lvl_lku[conf_level] * sqrt(Var)/sqrt(num_samples) / mean
     #
-    def calcRE(self, conf_level, samples):
+    def calcRE(self, conf_level):
         
-        self.calcConfInterval(conf_level, samples)
+        self.calcConfInterval(conf_level)
 
         if self.byte_mean == 0:
             self.byte_re = 0
@@ -105,13 +119,9 @@ class Samples:
             self.prob_re = self.prob_ci / self.prob_mean
 
     # zeros have been eliminated
-    def calcResults(self, conf_level, samples, sample_num):
-        self.num_samples = sample_num
-        self.prob_sum += len(samples)
-        for sample in samples:
-            self.byte_sum += sample
+    def calcResults(self, conf_level):
 
-        self.calcRE(conf_level, samples)
+        self.calcRE(conf_level)
     
 #
 # Generate samples from a known distribution and verify the statistics

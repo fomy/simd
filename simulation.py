@@ -34,6 +34,7 @@ class Simulation:
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
             self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
 
+        samples = Samples()
         start_time = datetime.datetime.now()
         for i in xrange(self.iterations):
 
@@ -52,15 +53,17 @@ class Simulation:
             result = self.system.run()
 
             if result[0] == System.RESULT_NOTHING_LOST:
-                #sample_list.append(0)
+                samples.addSample(0)
                 self.logger.debug("%dth iteration: nothing lost")
             elif result[0] == System.RESULT_RAID_FAILURE:
                 self.logger.debug("%dth iteration: %s, %d bytes lost" % (i, "RAID Failure", result[1]))
-                sample_list.append(result[1])
+                #sample_list.append(result[1])
+                samples.addSample(result[1])
                 raid_failure_count += 1
             elif result[0] == System.RESULT_SECTORS_LOST:
                 self.logger.debug("%dth iterations: %s, %d bytes lost" % (i, "Sectors Lost", sum(result[1:])))
-                sample_list.append(sum(result[1:]))
+                #sample_list.append(sum(result[1:]))
+                samples.addSample(sum(result[1:]))
                 sector_error_count += len(result) - 1
             else:
                 sys.exit(2)
@@ -70,11 +73,8 @@ class Simulation:
         prob_result = None
         byte_result = None
 
-        samples = Samples()
-        stime = time.clock()
-        samples.calcResults("0.90", sample_list, self.iterations)
-        t = time.clock() - stime
-        print >> sys.stderr, "Result analysis takes %f Sec" % t
+        samples.calcResults("0.90")
+        #print >> sys.stderr, "Result analysis takes %f Sec" % t
 
         # finished, return results
         # the format of result:
