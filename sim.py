@@ -202,19 +202,7 @@ def get_parms():
 
 def do_it():
 
-    logger = logging.getLogger("sim")
-
-    (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re) = get_parms()
-
-    logger.debug("Parameters: mission time = %d, iterations = %ld, raid_type = %s, raid_num = %d, \
-disk_capacity = %d, disk_fail_parms = %s, disk_repair_parms = %s, \
-disk_lse_parms = %s, disk_scrubbing_parms = %s" % 
-            (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            str(disk_fail_parms), str(disk_repair_parms), str(disk_lse_parms), str(disk_scrubbing_parms)))
-
-    simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re)
+    simulation = Simulation(*get_parms())
 
     (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
     
