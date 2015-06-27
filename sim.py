@@ -16,6 +16,7 @@ def usage(arg):
     print "-R <disk_repair_dist> [--disk_repair_dist <disk_repair_dist>]"
     print "-L <disk_lse_dist> [--disk_lse_dist <disk_lse_dist>]"
     print "-S <disk_scrubbing_dist> [--disk_scrubbing_dist <disk_scrubbing_dist>]"
+    print "-f <required_re> [--force_re <required_re>]"
     print ""
     print "Detail:"
     print "mission_time = simulation end time in hours, default is 87600"
@@ -45,8 +46,10 @@ def usage(arg):
     print "                      location = location parameter of a Weibull"
     print "disk_lse_dist = \"(rate = 1.08/10000 by default)\""
     print ""
+    print "required_re = the required relative error, disable by default"
+    print ""
     print "Samples:"
-    print arg, "-m 10000 -n 1 -i 25 -F \"(1.12, 461386)\" -R \"(2.0, 20.0)\""
+    print arg, "-i 10000 -r \"mds_5_1\" -f 0.05"
 
     sys.exit(2)
 
@@ -66,15 +69,19 @@ def get_parms():
     # So the default is 1TB
     disk_capacity = 2*1024*1024*1024L
     capacity_factor = 1.0
-
+    
     parms = "Elerath2014A"
     disk_fail_parms = None 
     disk_repair_parms = None
     disk_lse_parms = None
     disk_scrubbing_parms = None
 
+    # This indicates the simulation will not end until reach a required relative error
+    force_re = False
+    required_re = 0.05
+
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:f:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -83,6 +90,7 @@ def get_parms():
                                                                              "disk_repair_dist",
                                                                              "disk_lse_dist",
                                                                              "disk_scrubbing_dist",
+                                                                             "force_re",
                                                                              ])
     except:
         usage(sys.argv[0])
@@ -151,6 +159,9 @@ def get_parms():
             capacity_factor = float(a)
         elif o in ("-p", "--parameters"):
             parms = a
+        elif o in ("-f", "--force_re"):
+            force_re = True
+            required_re = float(a)
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
@@ -187,14 +198,14 @@ def get_parms():
             exit(2)
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)             
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re)
 
 def do_it():
 
     logger = logging.getLogger("sim")
 
     (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) = get_parms()
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re) = get_parms()
 
     logger.debug("Parameters: mission time = %d, iterations = %ld, raid_type = %s, raid_num = %d, \
 disk_capacity = %d, disk_fail_parms = %s, disk_repair_parms = %s, \
@@ -203,10 +214,9 @@ disk_lse_parms = %s, disk_scrubbing_parms = %s" %
             str(disk_fail_parms), str(disk_repair_parms), str(disk_lse_parms), str(disk_scrubbing_parms)))
 
     simulation = Simulation(mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms)
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re)
 
-    (samples, raid_failure_count, sector_error_count) = simulation.simulate()
-
+    (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
     
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
