@@ -202,10 +202,15 @@ def get_parms():
 
 def do_it():
 
-    simulation = Simulation(*get_parms())
+    parms = get_parms()
+    simulation = Simulation(*parms)
 
     (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
     
+    raid_type = parms[2]
+    raid_num = parms[3]
+    disk_capacity = parms[4]
+
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
 
