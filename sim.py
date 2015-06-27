@@ -1,6 +1,7 @@
 import time
 import sys
 import logging
+import signal
 from mpmath import *
 from numpy import random
 import getopt
@@ -200,16 +201,7 @@ def get_parms():
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re)
 
-def do_it():
-
-    parms = get_parms()
-    simulation = Simulation(*parms)
-
-    (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
-    
-    raid_type = parms[2]
-    raid_num = parms[3]
-    disk_capacity = parms[4]
+def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity):
 
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
@@ -233,7 +225,42 @@ def do_it():
     print "Average bytes lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % byte_result
     print "*******************"
 
+
+def do_it():
+
+    parms = get_parms()
+    simulation = Simulation(*parms)
+
+    (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
+    
+    raid_type = parms[2]
+    raid_num = parms[3]
+    disk_capacity = parms[4]
+
+    print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity)
+
+
+
+def sig_quit(sig, frame):
+
+    # backtrace to get the simulation object
+    object = frame.f_locals.get("self", None)
+    while not isinstance(object, Simulation):
+        frame = frame.f_back
+        object = frame.f_locals.get("self", None)
+
+    print "\nThe simulation is interrupted!"
+
+    object.samples.calcResults("0.90")
+    iterations = object.iterations - object.more_iterations + object.cur_i
+    print_result(object.samples, object.raid_failure_count, object.sector_error_count, 
+            iterations, object.raid_type, object.raid_num, object.disk_capacity)
+
+    sys.exit(1)
+
 if __name__ == "__main__":
+    simulation = None
+    signal.signal(signal.SIGINT, sig_quit)
     do_it()
 
 
