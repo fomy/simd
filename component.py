@@ -4,8 +4,8 @@ from bm_ops import *
 
 class Disk:
 
-    DISK_STATE_OK = "state ok"
-    DISK_STATE_FAILED = "state failed"
+    DISK_STATE_OK = "ok"
+    DISK_STATE_FAILED = "failed"
 
     DISK_EVENT_FAIL = "event disk fail"
     DISK_EVENT_REPAIR = "event disk repair"
@@ -85,6 +85,9 @@ class Raid:
 
     logger = logging.getLogger("sim")
 
+    RAID_STATE_OK = "ok"
+    RAID_STATE_FAILED = "failed"
+
     # A RAID consists of many disks
     def __init__(self, raid_type, disk_capacity, disk_fail_parms,
             disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
@@ -108,10 +111,15 @@ class Raid:
 
         self.critical_region = 0
 
+        self.state = Raid.RAID_STATE_OK
+        self.bytes_lost = 0
+
     def reset(self, r_idx, mission_time):
         self.failed_disk_count = 0
         self.failed_disk_bitmap = 0
         self.critical_region = 0
+        self.state = Raid.RAID_STATE_OK
+        self.bytes_lost = 0
 
         events = []
         for idx in range(len(self.disks)):
@@ -133,10 +141,10 @@ class Raid:
             if r < self.critical_region:
                 self.critical_region = r
 
-    # Return bytes we lost if the RAID is failure 
+    # Return True if the RAID is failure 
     def check_failure(self, current_time):
         if self.failed_disk_count <= self.parity_fragments:
-            return 0
+            return False 
 
         # calculate the bytes lost if the RAID is failure
         # We assume the RAID is well rotated.
@@ -144,14 +152,18 @@ class Raid:
 
         self.logger.debug("RAID Failure")
 
-        return self.disk_capacity * Disk.SECTOR_SIZE * self.critical_region * data_fraction
-            
+        self.state = Raid.RAID_STATE_FAILED
+        # We ignore the previously developed LSEs
+        self.bytes_lost = self.disk_capacity * Disk.SECTOR_SIZE * self.critical_region * data_fraction
+
+        return True             
+
     def check_sectors_lost(self, current_time):
         if self.failed_disk_count < self.parity_fragments:
-            return 0
+            return False 
+
         # No longer fault tolerent
         # Any LSE will lead to data loss
-
         count = 0
         for disk in self.disks:
             if disk.is_failure() == True:
@@ -162,11 +174,12 @@ class Raid:
                 count += disk.generate_sector_errors(time)
 
         if count == 0:
-            return 0
+            return False
 
         self.logger.debug("%d sectors lost" % count)
 
-        return count * Disk.SECTOR_SIZE
+        self.bytes_lost += count * Disk.SECTOR_SIZE
+        return True
 
     def degrade(self, disk_idx):
         repair_time = self.disks[disk_idx].fail();

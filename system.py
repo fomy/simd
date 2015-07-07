@@ -11,11 +11,13 @@ class System:
 
     logger = logging.getLogger("sim")
 
+
     # A system consists of many RAIDs
     def __init__(self, mission_time, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
         self.mission_time = mission_time
         self.raid_num = raid_num
+        self.avail_raids = raid_num
 
         self.logger.debug("System: mission_time = %d, raid_num = %d" % (self.mission_time, self.raid_num))
 
@@ -31,11 +33,27 @@ class System:
 
         self.event_queue = sorted(self.event_queue, reverse=True)
 
-    def go_to_next_event(self):
-        if len(self.event_queue) == 0:
-            return None
 
-        (event_time, disk_idx, raid_idx) = self.event_queue.pop()
+    def calc_bytes_lost(self):
+        results = [System.RESULT_SECTORS_LOST, 0]
+        for raid in self.raids:
+            results[1] += raid.bytes_lost
+            if(raid.state == Raid.RAID_STATE_FAILED):
+                results[0] = System.RESULT_RAID_FAILURE
+
+        if results[1] == 0:
+            results[0] = System.RESULT_NOTHING_LOST
+
+        return results
+
+    def go_to_next_event(self):
+
+        while True:
+            if len(self.event_queue) == 0:
+                return None
+            (event_time, disk_idx, raid_idx) = self.event_queue.pop()
+            if self.raids[raid_idx].state == Raid.RAID_STATE_OK:
+                break
 
         # After update, the system state is consistent
         (event_type, next_event_time) = self.raids[raid_idx].update_to_event(event_time, disk_idx)
@@ -50,12 +68,10 @@ class System:
         return (event_type, event_time, raid_idx)
 
     # Three possible returns
-    # [System.RESULT_NOTHING_LOST]
+    # [System.RESULT_NOTHING_LOST, 0]
     # [System.RESULT_RAID_FAILURE, bytes]
-    # [System.RESULT_SECTORS_LOST, lost1, lost2, ...]
+    # [System.RESULT_SECTORS_LOST, bytes]
     def run(self):
-
-        sectors_lost = [System.RESULT_SECTORS_LOST]
 
         while True:
 
@@ -69,24 +85,19 @@ class System:
                 continue
 
             # Check whether the failed disk causes a RAID failure 
-            bytes_lost = self.raids[raid_idx].check_failure(event_time)
-            if  bytes_lost > 0:
-                # We return immediately because this event is rare and serious
-                # It seems unnecessary to further check LSEs
+            if self.raids[raid_idx].check_failure(event_time) == True:
                 # TO-DO: When deduplication model is ready, we need to amplify bytes_lost
                 # e.g., bytes_lost * deduplication factor
-                return [System.RESULT_RAID_FAILURE, bytes_lost]
+                self.avail_raids -= 1
+                if self.avail_raids == 0:
+                    break
+
+                continue
 
             # Check whether a LSE will cause a data loss
             # check_sectors_lost will return the bytes of sector lost
             # We need to further amplify it according to our file system
-            lse = self.raids[raid_idx].check_sectors_lost(event_time)
-            if lse > 0:
-                sectors_lost.append(lse)
+            self.raids[raid_idx].check_sectors_lost(event_time)
 
-        # The mission concludes
-        if len(sectors_lost) > 1:
-            # TO-DO: Waiting for deduplication model
-            return sectors_lost
-
-        return [System.RESULT_NOTHING_LOST]
+        # The mission concludes or all RAIDs fail
+        return self.calc_bytes_lost()

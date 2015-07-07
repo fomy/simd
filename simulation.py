@@ -65,14 +65,12 @@ class Simulation:
                 self.logger.debug("%dth iteration: nothing lost" % self.cur_i)
             elif result[0] == System.RESULT_RAID_FAILURE:
                 self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[1]))
-                #sample_list.append(result[1])
                 self.samples.addSample(result[1])
                 self.raid_failure_count += 1
             elif result[0] == System.RESULT_SECTORS_LOST:
                 self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", sum(result[1:])))
-                #sample_list.append(sum(result[1:]))
-                self.samples.addSample(sum(result[1:]))
-                self.sector_error_count += len(result) - 1
+                self.samples.addSample(result[1])
+                self.sector_error_count += 1
             else:
                 sys.exit(2)
 
