@@ -11,7 +11,7 @@ class Simulation:
     logger = logging.getLogger("sim")
 
     def __init__(self, mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re):
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, fs_trace):
         self.mission_time = mission_time
         self.iterations = iterations
         self.raid_type = raid_type
@@ -39,6 +39,8 @@ class Simulation:
 
         self.cur_i = 0
         self.more_iterations = 0
+        
+        self.fs_trace = fs_trace
 
     def get_runtime(self):
         delta = datetime.datetime.now() - self.start_time

@@ -82,6 +82,9 @@ def get_parms():
     force_re = False
     required_re = 0.05
 
+    # file system trace
+    fs_trace = None
+
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:f:", ["help", "log", "mission_time", 
                                                                              "iterations",
@@ -165,6 +168,8 @@ def get_parms():
         elif o in ("-a", "--accuracy"):
             force_re = True
             required_re = float(a)
+        elif o in ("-f", "--trace"):
+            fs_trace = a
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
@@ -201,7 +206,7 @@ def get_parms():
             exit(2)
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re)
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, fs_trace)
 
 def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity):
 
@@ -225,6 +230,7 @@ def print_result(samples, raid_failure_count, sector_error_count, iterations, ra
     print "Estimated reliability: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
     print "*******************"
     print "Average bytes lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % byte_result
+    print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % (byte_result[0]/total_capacity)
     print "*******************"
 
 
