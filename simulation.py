@@ -44,14 +44,13 @@ class Simulation:
             self.filesystem = []
             tracefile = open(fs_trace, "r")
             lines = list(tracefile)
-            print len(lines)
             for i in range(len(lines)-1):
                 self.filesystem.append(int(lines[i]))
             self.dr = float(lines[-1])
             tracefile.close()
         else:
             self.filesystem = None
-            self.dr = None
+            self.dr = 1
 
     def get_runtime(self):
         delta = datetime.datetime.now() - self.start_time
@@ -115,4 +114,4 @@ class Simulation:
 
         # finished, return results
         # the format of result:
-        return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations)
+        return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations, self.dr)

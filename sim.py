@@ -208,12 +208,12 @@ def get_parms():
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, fs_trace)
 
-def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity):
+def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr):
 
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
 
-    total_capacity = data_fragments * disk_capacity * raid_num * 512/1024/1024/1024/1024
+    total_capacity = data_fragments * disk_capacity * raid_num * 512/1024/1024/1024/1024 * dr
 
     prob_result = (samples.prob_mean, 100*samples.prob_re, samples.prob_mean - samples.prob_ci, 
             samples.prob_mean + samples.prob_ci, samples.prob_dev)
@@ -223,7 +223,7 @@ def print_result(samples, raid_failure_count, sector_error_count, iterations, ra
 
     localtime = time.asctime(time.localtime(time.time()))
     print "*******************"
-    print "System (%s): %dTB data, %d of %s RAID, %ld iterations" % (localtime, total_capacity, raid_num, raid_type, iterations)
+    print "System (%s): %.2fTB data, D/R = %.2f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, dr, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
@@ -239,13 +239,13 @@ def do_it():
     parms = get_parms()
     simulation = Simulation(*parms)
 
-    (samples, raid_failure_count, sector_error_count, iterations) = simulation.simulate()
+    (samples, raid_failure_count, sector_error_count, iterations, dr) = simulation.simulate()
     
     raid_type = parms[2]
     raid_num = parms[3]
     disk_capacity = parms[4]
 
-    print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity)
+    print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr)
 
 
 
