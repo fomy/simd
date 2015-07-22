@@ -223,7 +223,7 @@ def print_result(samples, raid_failure_count, sector_error_count, iterations, ra
 
     localtime = time.asctime(time.localtime(time.time()))
     print "*******************"
-    print "System (%s): %.2fTB data, D/R = %.2f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, dr, raid_num, raid_type, iterations)
+    print "System (%s): %.2fTB data, D/R = %.4f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, dr, raid_num, raid_type, iterations)
     print "*******************"
     print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
     print "*******************"
@@ -262,7 +262,7 @@ def sig_quit(sig, frame):
     object.samples.calcResults("0.90")
     iterations = object.iterations - object.more_iterations + object.cur_i
     print_result(object.samples, object.raid_failure_count, object.sector_error_count, 
-            iterations, object.raid_type, object.raid_num, object.disk_capacity)
+            iterations, object.raid_type, object.raid_num, object.disk_capacity, object.dr)
 
     sys.exit(1)
 

@@ -48,7 +48,7 @@ class Simulation:
             tracefile.close()
         else:
             self.filesystem = None
-            self.dr = 1
+            self.dr = 1.0
 
         self.start_time = datetime.datetime.now()
 
