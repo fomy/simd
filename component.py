@@ -113,13 +113,17 @@ class Raid:
 
         self.state = Raid.RAID_STATE_OK
         self.bytes_lost = 0
+        self.lse_count = 0
 
     def reset(self, r_idx, mission_time):
         self.failed_disk_count = 0
         self.failed_disk_bitmap = 0
         self.critical_region = 0
         self.state = Raid.RAID_STATE_OK
+        # for RAID failure
         self.bytes_lost = 0
+        # for LSE
+        self.lse_count = 0
 
         events = []
         for idx in range(len(self.disks)):
@@ -178,7 +182,8 @@ class Raid:
 
         self.logger.debug("%d sectors lost" % count)
 
-        self.bytes_lost += count * Disk.SECTOR_SIZE
+        #self.bytes_lost += count * Disk.SECTOR_SIZE
+        self.lse_count += count
         return True
 
     def degrade(self, disk_idx):

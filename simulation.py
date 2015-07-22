@@ -40,7 +40,18 @@ class Simulation:
         self.cur_i = 0
         self.more_iterations = 0
         
-        self.fs_trace = fs_trace
+        if fs_trace is not None:
+            self.filesystem = []
+            tracefile = open(fs_trace, "r")
+            lines = list(tracefile)
+            print len(lines)
+            for i in range(len(lines)-1):
+                self.filesystem.append(int(lines[i]))
+            self.dr = float(lines[-1])
+            tracefile.close()
+        else:
+            self.filesystem = None
+            self.dr = None
 
     def get_runtime(self):
         delta = datetime.datetime.now() - self.start_time
@@ -82,7 +93,7 @@ class Simulation:
     def simulate(self):
 
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
-            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms)
+            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms, self.filesystem, self.dr)
 
         self.more_iterations = self.iterations
         while True:

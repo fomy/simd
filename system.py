@@ -1,5 +1,6 @@
 import logging
 from collections import deque
+import random
 from mpmath import *
 
 from component import *
@@ -14,7 +15,7 @@ class System:
 
     # A system consists of many RAIDs
     def __init__(self, mission_time, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms):
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, filesystem, dr):
         self.mission_time = mission_time
         self.raid_num = raid_num
         self.avail_raids = raid_num
@@ -25,6 +26,11 @@ class System:
 
         self.raids = [Raid(raid_type, disk_capacity, disk_fail_parms,
                 disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) for i in range(raid_num)]
+
+        self.filesystem = filesystem
+        self.dr = dr
+        if filesystem is not None:
+            self.chunknum = len(filesystem)
 
     def reset(self):
         self.event_queue = []
@@ -37,9 +43,17 @@ class System:
     def calc_bytes_lost(self):
         results = [System.RESULT_SECTORS_LOST, 0]
         for raid in self.raids:
-            results[1] += raid.bytes_lost
             if(raid.state == Raid.RAID_STATE_FAILED):
+                if self.filesystem is not None:
+                    raid.bytes_lost *= self.dr
+                results[1] += raid.bytes_lost
                 results[0] = System.RESULT_RAID_FAILURE
+
+            for i in xrange(raid.lse_count):
+                if self.filesystem is not None:
+                    results[1] += self.filesystem[random.randrange(self.chunknum)]
+                else:
+                    results[1] += Disk.SECTOR_SIZE
 
         if results[1] == 0:
             results[0] = System.RESULT_NOTHING_LOST
