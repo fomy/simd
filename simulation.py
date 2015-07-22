@@ -32,8 +32,6 @@ class Simulation:
 
         self.samples = Samples()
 
-        self.start_time = datetime.datetime.now()
-
         self.raid_failure_count = 0
         self.sector_error_count = 0
 
@@ -51,6 +49,8 @@ class Simulation:
         else:
             self.filesystem = None
             self.dr = 1
+
+        self.start_time = datetime.datetime.now()
 
     def get_runtime(self):
         delta = datetime.datetime.now() - self.start_time
