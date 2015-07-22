@@ -18,6 +18,7 @@ def usage(arg):
     print "-L <disk_lse_dist> [--disk_lse_dist <disk_lse_dist>]"
     print "-S <disk_scrubbing_dist> [--disk_scrubbing_dist <disk_scrubbing_dist>]"
     print "-a <required_re> [--accuracy <required_re>]"
+    print "-f <trace> [--trace <trace_file>]"
     print ""
     print "Detail:"
     print "mission_time = simulation end time in hours, default is 87600"
@@ -50,7 +51,7 @@ def usage(arg):
     print "required_re = the required relative error, disable by default"
     print ""
     print "Samples:"
-    print arg, "-i 10000 -r \"mds_5_1\" -f 0.05"
+    print arg, "-i 10000 -r \"mds_5_1\" -a 0.05"
 
     sys.exit(2)
 
@@ -82,7 +83,7 @@ def get_parms():
     required_re = 0.05
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:f:a:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:f:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -92,6 +93,7 @@ def get_parms():
                                                                              "disk_lse_dist",
                                                                              "disk_scrubbing_dist",
                                                                              "accuracy",
+                                                                             "trace",
                                                                              ])
     except:
         usage(sys.argv[0])
