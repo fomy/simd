@@ -17,7 +17,7 @@ def usage(arg):
     print "-R <disk_repair_dist> [--disk_repair_dist <disk_repair_dist>]"
     print "-L <disk_lse_dist> [--disk_lse_dist <disk_lse_dist>]"
     print "-S <disk_scrubbing_dist> [--disk_scrubbing_dist <disk_scrubbing_dist>]"
-    print "-f <required_re> [--force_re <required_re>]"
+    print "-a <required_re> [--accuracy <required_re>]"
     print ""
     print "Detail:"
     print "mission_time = simulation end time in hours, default is 87600"
@@ -82,7 +82,7 @@ def get_parms():
     required_re = 0.05
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:f:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:f:a:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -91,7 +91,7 @@ def get_parms():
                                                                              "disk_repair_dist",
                                                                              "disk_lse_dist",
                                                                              "disk_scrubbing_dist",
-                                                                             "force_re",
+                                                                             "accuracy",
                                                                              ])
     except:
         usage(sys.argv[0])
@@ -160,7 +160,7 @@ def get_parms():
             capacity_factor = float(a)
         elif o in ("-p", "--parameters"):
             parms = a
-        elif o in ("-f", "--force_re"):
+        elif o in ("-a", "--accuracy"):
             force_re = True
             required_re = float(a)
 
