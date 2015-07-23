@@ -6,9 +6,9 @@ from mpmath import *
 from component import *
 
 class System:
-    RESULT_NOTHING_LOST = 0 # "Nothing Lost"
-    RESULT_RAID_FAILURE = 1 #"RAID Failure"
-    RESULT_SECTORS_LOST = 2 #"Sectors Lost"
+    #RESULT_NOTHING_LOST = 0 # "Nothing Lost"
+    #RESULT_RAID_FAILURE = 1 #"RAID Failure"
+    #RESULT_SECTORS_LOST = 2 #"Sectors Lost"
 
     logger = logging.getLogger("sim")
 
@@ -41,22 +41,18 @@ class System:
 
 
     def calc_bytes_lost(self):
-        results = [System.RESULT_SECTORS_LOST, 0]
+        results = [0, 0]
         for raid in self.raids:
             if(raid.state == Raid.RAID_STATE_FAILED):
                 if self.filesystem is not None:
                     raid.bytes_lost *= self.dr
-                results[1] += raid.bytes_lost
-                results[0] = System.RESULT_RAID_FAILURE
+                results[0] += raid.bytes_lost
 
             for i in xrange(raid.lse_count):
                 if self.filesystem is not None:
                     results[1] += self.filesystem[random.randrange(self.chunknum)]
                 else:
                     results[1] += Disk.SECTOR_SIZE
-
-        if results[1] == 0:
-            results[0] = System.RESULT_NOTHING_LOST
 
         return results
 

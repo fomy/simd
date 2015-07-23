@@ -208,7 +208,7 @@ def get_parms():
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, fs_trace)
 
-def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr):
+def print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr, er):
 
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
@@ -225,12 +225,14 @@ def print_result(samples, raid_failure_count, sector_error_count, iterations, ra
     print "*******************"
     print "System (%s): %.2fTB data, D/R = %.4f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, dr, raid_num, raid_type, iterations)
     print "*******************"
-    print "Summary: %d data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
+    print "Summary: %d data loss events (%d by raid failures, %d by lse), ER = %.4f" % (data_loss_event, raid_failure_count, sector_error_count, er)
     print "*******************"
     print "Estimated reliability: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
     print "*******************"
     print "Average bytes lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % byte_result
-    print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % (byte_result[0]/total_capacity)
+    print "*******************"
+    NOMDL = byte_result[0]/total_capacity
+    print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB (%.5f by RAID failures)" % (NOMDL, er/(er+1))
     print "*******************"
 
 
@@ -239,13 +241,14 @@ def do_it():
     parms = get_parms()
     simulation = Simulation(*parms)
 
-    (samples, raid_failure_count, sector_error_count, iterations, dr) = simulation.simulate()
+    # er == error ratio of raid failures and LSEs
+    (samples, raid_failure_count, sector_error_count, iterations, dr, er) = simulation.simulate()
     
     raid_type = parms[2]
     raid_num = parms[3]
     disk_capacity = parms[4]
 
-    print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr)
+    print_result(samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, dr, er)
 
 
 
@@ -262,7 +265,7 @@ def sig_quit(sig, frame):
     object.samples.calcResults("0.90")
     iterations = object.iterations - object.more_iterations + object.cur_i
     print_result(object.samples, object.raid_failure_count, object.sector_error_count, 
-            iterations, object.raid_type, object.raid_num, object.disk_capacity, object.dr)
+            iterations, object.raid_type, object.raid_num, object.disk_capacity, object.dr, object.er)
 
     sys.exit(1)
 

@@ -37,6 +37,9 @@ class Simulation:
 
         self.cur_i = 0
         self.more_iterations = 0
+
+        self.bytes_lost_by_raid_failure = 0
+        self.bytes_lost_by_lse = 0
         
         if fs_trace is not None:
             self.filesystem = []
@@ -72,19 +75,16 @@ class Simulation:
         
             result = self.system.run()
 
-            if result[0] == System.RESULT_NOTHING_LOST:
-                self.samples.addSample(0)
-                self.logger.debug("%dth iteration: nothing lost" % self.cur_i)
-            elif result[0] == System.RESULT_RAID_FAILURE:
-                self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[1]))
-                self.samples.addSample(result[1])
-                self.raid_failure_count += 1
-            elif result[0] == System.RESULT_SECTORS_LOST:
-                self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", sum(result[1:])))
-                self.samples.addSample(result[1])
+            if result[0] == 0:
+                self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
                 self.sector_error_count += 1
             else:
-                sys.exit(2)
+                self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
+                self.raid_failure_count += 1
+
+            self.samples.addSample(result[0] + result[1])
+            self.bytes_lost_by_raid_failure += result[0]
+            self.bytes_lost_by_lse += result[1]
 
         print >> sys.stderr,  "%6.2f%%: [" % (100.0), "\b= "*100, "\b\b>", "\b]", "%3dd%2dh%2dm%2ds"% self.get_runtime() 
 
@@ -114,4 +114,5 @@ class Simulation:
 
         # finished, return results
         # the format of result:
-        return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations, self.dr)
+        return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations, 
+                self.dr, 1.0*self.bytes_lost_by_raid_failure/self.bytes_lost_by_lse)
