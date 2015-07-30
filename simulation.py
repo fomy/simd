@@ -40,6 +40,8 @@ class Simulation:
 
         self.bytes_lost_by_raid_failure = 0
         self.bytes_lost_by_lse = 0
+
+        self.er = 1.0
         
         if fs_trace is not None:
             self.filesystem = []
@@ -114,5 +116,6 @@ class Simulation:
 
         # finished, return results
         # the format of result:
+        self.er = 1.0*self.bytes_lost_by_raid_failure/self.bytes_lost_by_lse
         return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations, 
-                self.dr, 1.0*self.bytes_lost_by_raid_failure/self.bytes_lost_by_lse)
+                self.dr, self.er)
