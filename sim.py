@@ -229,19 +229,18 @@ def get_parms():
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
             fs_trace, mode, dedup)
 
-def print_result(raid_failure_samples, lse_samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, df):
+def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss, 
+        systems_with_raid_failures, systems_with_lse, iterations, raid_type, raid_num, disk_capacity, df):
 
     (type, d, p) = raid_type.split("_");
     data_fragments = int(d)
 
     total_capacity = data_fragments * disk_capacity * raid_num * 512/1024/1024/1024/1024 * df
 
-    data_loss_event = raid_failure_count + sector_error_count
-
     localtime = time.asctime(time.localtime(time.time()))
     print "**************************************"
     print "System (%s): %.2fTB data, D/R = %.4f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, df, raid_num, raid_type, iterations)
-    print "Summary: %d of systems with data loss events (%d by raid failures, %d by lse)" % (data_loss_event, raid_failure_count, sector_error_count)
+    print "Summary: %d of systems with data loss events (%d by raid failures, %d by lse)" % (systems_with_data_loss, systems_with_raid_failures, systems_with_lse)
 
     prob_result = (raid_failure_samples.prob_mean, 100*raid_failure_samples.prob_re, raid_failure_samples.prob_mean - raid_failure_samples.prob_ci, 
             raid_failure_samples.prob_mean + raid_failure_samples.prob_ci, raid_failure_samples.prob_dev)
@@ -250,7 +249,12 @@ def print_result(raid_failure_samples, lse_samples, raid_failure_count, sector_e
 
     print "******** RAID Failure Part ***********"
     print "Probability of RAID Failures: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
-    print "Fraction of Data Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+    if mode == DeduplicationModel.MODEA:
+        print "Fraction of Blocks/Chunks Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+    elif mode == DeduplicationModel.MODEB:
+        print "Fraction of Files Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+    elif mode == DeduplicationModel.MODEC:
+        print "Fraction of Files Lost in Bytes: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
 
     prob_result = (lse_samples.prob_mean, 100*lse_samples.prob_re, lse_samples.prob_mean - lse_samples.prob_ci, 
             lse_samples.prob_mean + lse_samples.prob_ci, lse_samples.prob_dev)
@@ -259,9 +263,17 @@ def print_result(raid_failure_samples, lse_samples, raid_failure_count, sector_e
 
     print "************* LSE Part ***************"
     print "Probability of LSEs: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
-    print "Data (Files in Mode B/C) Lost by LSEs: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+
     NOMDL = value_result[0]/total_capacity
-    print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes (files in Mode B) per TB" % NOMDL
+    if mode == DeduplicationModel.MODEA:
+        print "Bytes of Blocks/Chunks Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % NOMDL
+    elif mode == DeduplicationModel.MODEB:
+        print "# of Corrupted Files: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %.5f files per TB" % NOMDL
+    elif mode == DeduplicationModel.MODEC:
+        print "Size of Corrupted Files: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % NOMDL
     print "**************************************"
 
 def do_it():
@@ -269,13 +281,15 @@ def do_it():
     parms = get_parms()
     simulation = Simulation(*parms)
 
-    (raid_failure_samples, lse_samples, raid_failure_count, sector_error_count, iterations, df) = simulation.simulate()
+    (raid_failure_samples, lse_samples, systems_with_data_loss, 
+            systems_with_raid_failures, systems_with_lse, iterations, df) = simulation.simulate()
     
     raid_type = parms[2]
     raid_num = parms[3]
     disk_capacity = parms[4]
 
-    print_result(raid_failure_samples, lse_samples, raid_failure_count, sector_error_count, iterations, raid_type, raid_num, disk_capacity, df)
+    print_result(parms[-2], raid_failure_samples, lse_samples, systems_with_data_loss, 
+            systems_with_raid_failures, systems_with_lse, iterations, raid_type, raid_num, disk_capacity, df)
 
 def sig_quit(sig, frame):
 
@@ -291,7 +305,8 @@ def sig_quit(sig, frame):
     object.lse_samples.calcResults("0.95")
 
     iterations = object.iterations - object.more_iterations + object.cur_i
-    print_result(object.raid_failure_samples, object.lse_samples, object.raid_failure_count, object.sector_error_count, 
+    print_result(object.mode, object.raid_failure_samples, object.lse_samples, object.systems_with_data_loss, 
+            object.systems_with_raid_failures, object.systems_with_lse, 
             iterations, object.raid_type, object.raid_num, object.disk_capacity, object.system.get_df())
 
     sys.exit(1)

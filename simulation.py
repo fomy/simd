@@ -34,8 +34,9 @@ class Simulation:
         self.raid_failure_samples = Samples()
         self.lse_samples = Samples()
 
-        self.raid_failure_count = 0
-        self.sector_error_count = 0
+        self.systems_with_raid_failures = 0
+        self.systems_with_lse = 0
+        self.systems_with_data_loss = 0
 
         self.cur_i = 0
         self.more_iterations = 0
@@ -66,19 +67,19 @@ class Simulation:
         
             result = self.system.run()
 
-            if result[0] != 0:
-                self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
-                self.raid_failure_count += 1
-
-            if result[1] != 0:
-                self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
-                self.sector_error_count += 1
+            if result[0] != 0 or result[1] != 0:
+                self.systems_with_data_loss += 1
+                if result[0] != 0:
+                    self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
+                    self.systems_with_raid_failures += 1
+                if result[1] != 0:
+                    self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
+                    self.systems_with_lse += 1
 
             self.raid_failure_samples.addSample(result[0])
             self.lse_samples.addSample(result[1])
 
         print >> sys.stderr,  "%6.2f%%: [" % (100.0), "\b= "*100, "\b\b>", "\b]", "%3dd%2dh%2dm%2ds"% self.get_runtime() 
-
 
     def simulate(self):
 
@@ -97,10 +98,10 @@ class Simulation:
                 break
 
             if self.raid_failure_samples.value_re > self.required_re:
-                self.more_iterations = (self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations 
+                self.more_iterations = int((self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations)
                 print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.value_re, self.required_re),
             elif self.lse_samples.value_re > self.required_re:
-                self.more_iterations = (self.lse_samples.value_re/self.required_re - 1) * self.iterations 
+                self.more_iterations = int((self.lse_samples.value_re/self.required_re - 1) * self.iterations)
                 print >> sys.stderr, "Since LSE Relative Error %5f > %5f," % (self.lse_samples.value_re, self.required_re),
             else:
                 break
@@ -114,5 +115,5 @@ class Simulation:
 
         # finished, return results
         # the format of result:
-        return (self.raid_failure_samples, self.lse_samples, self.raid_failure_count, 
-                self.sector_error_count, self.iterations, self.system.get_df())
+        return (self.raid_failure_samples, self.lse_samples, self.systems_with_data_loss, self.systems_with_raid_failures, 
+                self.systems_with_lse, self.iterations, self.system.get_df())
