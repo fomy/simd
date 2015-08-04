@@ -112,7 +112,7 @@ class Raid:
         self.critical_region = 0
 
         self.state = Raid.RAID_STATE_OK
-        self.bytes_lost = 0
+        self.corrupted_area = 0
         self.lse_count = 0
 
     def reset(self, r_idx, mission_time):
@@ -121,7 +121,7 @@ class Raid:
         self.critical_region = 0
         self.state = Raid.RAID_STATE_OK
         # for RAID failure
-        self.bytes_lost = 0
+        self.corrupted_area = 0
         # for LSE
         self.lse_count = 0
 
@@ -157,8 +157,9 @@ class Raid:
         self.logger.debug("RAID Failure")
 
         self.state = Raid.RAID_STATE_FAILED
+
         # We ignore the previously developed LSEs
-        self.bytes_lost = self.disk_capacity * Disk.SECTOR_SIZE * self.critical_region * data_fraction
+        self.corrupted_area = self.critical_region 
 
         return True             
 
@@ -182,7 +183,6 @@ class Raid:
 
         self.logger.debug("%d sectors lost" % count)
 
-        #self.bytes_lost += count * Disk.SECTOR_SIZE
         self.lse_count += count
         return True
 

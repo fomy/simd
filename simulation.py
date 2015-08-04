@@ -11,7 +11,8 @@ class Simulation:
     logger = logging.getLogger("sim")
 
     def __init__(self, mission_time, iterations, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, fs_trace):
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
+            fs_trace, mode, dedup):
         self.mission_time = mission_time
         self.iterations = iterations
         self.raid_type = raid_type
@@ -30,7 +31,8 @@ class Simulation:
         self.force_re = force_re
         self.required_re = required_re
 
-        self.samples = Samples()
+        self.raid_failure_samples = Samples()
+        self.lse_samples = Samples()
 
         self.raid_failure_count = 0
         self.sector_error_count = 0
@@ -38,23 +40,10 @@ class Simulation:
         self.cur_i = 0
         self.more_iterations = 0
 
-        self.bytes_lost_by_raid_failure = 0
-        self.bytes_lost_by_lse = 0
-
-        self.er = 1.0
+        self.fs_trace = fs_trace
+        self.mode = mode
+        self.dedup = dedup
         
-        if fs_trace is not None:
-            self.filesystem = []
-            tracefile = open(fs_trace, "r")
-            lines = list(tracefile)
-            for i in range(len(lines)-1):
-                self.filesystem.append(int(lines[i]))
-            self.dr = float(lines[-1])
-            tracefile.close()
-        else:
-            self.filesystem = None
-            self.dr = 1.0
-
         self.start_time = datetime.datetime.now()
 
     def get_runtime(self):
@@ -77,16 +66,16 @@ class Simulation:
         
             result = self.system.run()
 
-            if result[0] == 0:
-                self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
-                self.sector_error_count += 1
-            else:
+            if result[0] != 0:
                 self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
                 self.raid_failure_count += 1
 
-            self.samples.addSample(result[0] + result[1])
-            self.bytes_lost_by_raid_failure += result[0]
-            self.bytes_lost_by_lse += result[1]
+            if result[1] != 0:
+                self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
+                self.sector_error_count += 1
+
+            self.raid_failure_samples.addSample(result[0])
+            self.lse_samples.addSample(result[1])
 
         print >> sys.stderr,  "%6.2f%%: [" % (100.0), "\b= "*100, "\b\b>", "\b]", "%3dd%2dh%2dm%2ds"% self.get_runtime() 
 
@@ -94,28 +83,36 @@ class Simulation:
     def simulate(self):
 
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
-            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms, self.filesystem, self.dr)
+            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms, self.fs_trace, self.mode, self.dedup)
 
         self.more_iterations = self.iterations
         while True:
 
             self.run_iterations(self.more_iterations)
 
-            self.samples.calcResults("0.90")
+            self.raid_failure_samples.calcResults("0.95")
+            self.lse_samples.calcResults("0.95")
 
-            if self.force_re == False or self.samples.byte_re < self.required_re:
+            if self.force_re == False:
                 break
 
-            self.more_iterations = (self.samples.byte_re/self.required_re - 1) * self.iterations 
+            if self.raid_failure_samples.byte_re > self.required_re:
+                self.more_iterations = (self.raid_failure_samples.byte_re/self.required_re - 1) * self.iterations 
+                print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.byte_re, self.required_re),
+            elif self.lse_samples.byte_re > self.required_re:
+                self.more_iterations = (self.lse_samples.byte_re/self.required_re - 1) * self.iterations 
+                print >> sys.stderr, "Since LSE Relative Error %5f > %5f," % (self.lse_samples.byte_re, self.required_re),
+            else:
+                break
+
             if self.more_iterations < 10000:
                 self.more_iterations = 10000
 
-            print >> sys.stderr, "Since Relative Error %5f > %5f, %d more iterations to meet the requirement." % (self.samples.byte_re, self.required_re, self.more_iterations)
+            print >> sys.stderr, "%d more iterations to meet the requirement." % self.more_iterations
 
             self.iterations += self.more_iterations
 
         # finished, return results
         # the format of result:
-        self.er = 1.0*self.bytes_lost_by_raid_failure/self.bytes_lost_by_lse
-        return (self.samples, self.raid_failure_count, self.sector_error_count, self.iterations, 
-                self.dr, self.er)
+        return (self.raid_failure_samples, self.lse_samples, self.raid_failure_count, 
+                self.sector_error_count, self.iterations, self.system.get_df())

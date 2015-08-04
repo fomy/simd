@@ -21,8 +21,8 @@ class Samples:
     #
     def __init__(self):
 
-        self.byte_sum = mpf(0)
-        self.byte2_sum = mpf(0)
+        self.value_sum = mpf(0)
+        self.value2_sum = mpf(0)
         self.prob_sum = mpf(0)
 
         self.num_samples = 0
@@ -38,11 +38,11 @@ class Samples:
         self.conf_lvl_lku["0.95"] = mpf(1.960)
         self.conf_lvl_lku["0.995"] = mpf(2.801)
 
-        self.byte_mean = None
-        self.byte_mean2 = None
-        self.byte_dev = None
-        self.byte_ci = None
-        self.byte_re = None
+        self.value_mean = None
+        self.value_mean2 = None
+        self.value_dev = None
+        self.value_ci = None
+        self.value_re = None
 
         # used to calculate the probability of data loss
         self.prob_mean = None
@@ -54,16 +54,16 @@ class Samples:
     # only non-zeros in samples, num shows the actual number of samples */
     def addSamples(self, samples, num):
         for sample in samples:
-            self.byte_sum += sample
-            self.byte2_sum += power(sample, 2)
+            self.value_sum += sample
+            self.value2_sum += power(sample, 2)
             self.prob_sum += 1
 
         self.num_samples += num 
 
     def addSample(self, sample):
         if sample > 0:
-            self.byte_sum += sample
-            self.byte2_sum += power(sample, 2)
+            self.value_sum += sample
+            self.value2_sum += power(sample, 2)
             self.prob_sum += 1
 
         self.num_samples += 1
@@ -72,8 +72,8 @@ class Samples:
     # Calculate the sample mean based on the samples for this instance
     #
     def calcMean(self):
-        self.byte_mean = self.byte_sum / self.num_samples
-        self.byte2_mean = self.byte2_sum / self.num_samples
+        self.value_mean = self.value_sum / self.num_samples
+        self.value2_mean = self.value2_sum / self.num_samples
         self.prob_mean = self.prob_sum / self.num_samples
 
     #
@@ -82,7 +82,7 @@ class Samples:
     #
     def calcStdDev(self ):
         self.calcMean()
-        self.byte_dev = sqrt(self.byte2_mean - power(self.byte_mean, 2))
+        self.value_dev = sqrt(self.value2_mean - power(self.value_mean, 2))
         self.prob_dev = sqrt(self.prob_mean - power(self.prob_mean, 2))
 
 
@@ -99,7 +99,7 @@ class Samples:
     
         self.calcStdDev()
 
-        self.byte_ci = abs(self.conf_lvl_lku[conf_level] * (self.byte_dev / sqrt(self.num_samples)))
+        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / sqrt(self.num_samples)))
         self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / sqrt(self.num_samples)))
 
     #
@@ -111,11 +111,11 @@ class Samples:
         
         self.calcConfInterval(conf_level)
 
-        if self.byte_mean == 0:
-            self.byte_re = 0
+        if self.value_mean == 0:
+            self.value_re = 0
             self.prob_re = 0
         else:
-            self.byte_re = self.byte_ci / self.byte_mean
+            self.value_re = self.value_ci / self.value_mean
             self.prob_re = self.prob_ci / self.prob_mean
 
     # zeros have been eliminated
