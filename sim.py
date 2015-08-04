@@ -239,7 +239,13 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
 
     localtime = time.asctime(time.localtime(time.time()))
     print "**************************************"
-    print "System (%s): %.2fTB data, D/R = %.4f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, df, raid_num, raid_type, iterations)
+    print "System (%s): %.2fTB data, D/F = %.4f, %d of %s RAID, %ld iterations, " % (localtime, total_capacity, df, raid_num, raid_type, iterations),
+    if mode == DeduplicationModel.MODEA:
+        print "Mode A"
+    elif mode == DeduplicationModel.MODEB:
+        print "Mode B"
+    elif mode == DeduplicationModel.MODEC:
+        print "Mode C"
     print "Summary: %d of systems with data loss events (%d by raid failures, %d by lse)" % (systems_with_data_loss, systems_with_raid_failures, systems_with_lse)
 
     prob_result = (raid_failure_samples.prob_mean, 100*raid_failure_samples.prob_re, raid_failure_samples.prob_mean - raid_failure_samples.prob_ci, 
