@@ -96,12 +96,12 @@ class Simulation:
             if self.force_re == False:
                 break
 
-            if self.raid_failure_samples.byte_re > self.required_re:
-                self.more_iterations = (self.raid_failure_samples.byte_re/self.required_re - 1) * self.iterations 
-                print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.byte_re, self.required_re),
-            elif self.lse_samples.byte_re > self.required_re:
-                self.more_iterations = (self.lse_samples.byte_re/self.required_re - 1) * self.iterations 
-                print >> sys.stderr, "Since LSE Relative Error %5f > %5f," % (self.lse_samples.byte_re, self.required_re),
+            if self.raid_failure_samples.value_re > self.required_re:
+                self.more_iterations = (self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations 
+                print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.value_re, self.required_re),
+            elif self.lse_samples.value_re > self.required_re:
+                self.more_iterations = (self.lse_samples.value_re/self.required_re - 1) * self.iterations 
+                print >> sys.stderr, "Since LSE Relative Error %5f > %5f," % (self.lse_samples.value_re, self.required_re),
             else:
                 break
 
