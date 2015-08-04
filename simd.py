@@ -256,7 +256,7 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
     print "******** RAID Failure Part ***********"
     print "Probability of RAID Failures: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
     if mode == DeduplicationModel.MODEA:
-        print "Fraction of Blocks/Chunks Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "Fraction of Blocks/Chunks Lost in the Failed Disk: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
     elif mode == DeduplicationModel.MODEB:
         print "Fraction of Files Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
     elif mode == DeduplicationModel.MODEC:
