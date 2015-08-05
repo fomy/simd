@@ -53,7 +53,7 @@ class DeduplicationModelA_Dedup(DeduplicationModel):
     def __init__(self, trace):
         self.trace = trace
         tracefile = open(self.trace, "r")
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE A:DEDUP")
+        assert(list(itertools.islice(tracefile, 1))[0] == "MODE A:DEDUP\n")
 
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
         self.df = self.filesystem[-102]
@@ -81,7 +81,7 @@ class DeduplicationModelB_NoDedup(DeduplicationModel):
         self.trace = trace
         tracefile = open(self.trace, "r")
 
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:NO DEDUP")
+        assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:NO DEDUP\n")
 
         # Totally 101 items for RAID failures
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
@@ -107,7 +107,7 @@ class DeduplicationModelC_NoDedup(DeduplicationModel):
         self.trace = trace
         tracefile = open(self.trace, "r")
 
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:NO DEDUP")
+        assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:NO DEDUP\n")
 
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
         self.df = 1.0
@@ -138,9 +138,9 @@ class DeduplicationModelBC_Dedup(DeduplicationModel):
         tracefile = open(self.trace, "r")
 
         if mode == DeduplicationModel.MODEB:
-            assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:DEDUP")
+            assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:DEDUP\")
         else:
-            assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:DEDUP")
+            assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:DEDUP\n")
 
         # The last 101 items are for RAID failures
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
