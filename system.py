@@ -138,7 +138,7 @@ class DeduplicationModelBC_Dedup(DeduplicationModel):
         tracefile = open(self.trace, "r")
 
         if mode == DeduplicationModel.MODEB:
-            assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:DEDUP\")
+            assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:DEDUP\n")
         else:
             assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:DEDUP\n")
 
