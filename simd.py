@@ -256,11 +256,11 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
     print "******** RAID Failure Part ***********"
     print "Probability of RAID Failures: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
     if mode == DeduplicationModel.MODEA:
-        print "Fraction of Blocks/Chunks Lost in the Failed Disk: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "Fraction of Blocks/Chunks Lost in the Failed Disk: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
     elif mode == DeduplicationModel.MODEB:
-        print "Fraction of Files Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "Fraction of Files Lost: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
     elif mode == DeduplicationModel.MODEC:
-        print "Fraction of Files Lost in Bytes: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
+        print "Fraction of Files Lost in Bytes: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
 
     prob_result = (lse_samples.prob_mean, 100*lse_samples.prob_re, lse_samples.prob_mean - lse_samples.prob_ci, 
             lse_samples.prob_mean + lse_samples.prob_ci, lse_samples.prob_dev)
@@ -272,14 +272,14 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
 
     NOMDL = value_result[0]/total_capacity
     if mode == DeduplicationModel.MODEA:
-        print "Bytes of Blocks/Chunks Lost: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % NOMDL
+        print "Bytes of Blocks/Chunks Lost: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
     elif mode == DeduplicationModel.MODEB:
-        print "# of Corrupted Files: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %.5f files per TB" % NOMDL
+        print "# of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %e files per TB" % NOMDL
     elif mode == DeduplicationModel.MODEC:
-        print "Size of Corrupted Files: %.5f +/- %f Percent, CI (%f,%f), StdDev: %f" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %.5f bytes per TB" % NOMDL
+        print "Size of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+        print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
     print "**************************************"
 
 def do_it():
