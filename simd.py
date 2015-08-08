@@ -95,7 +95,7 @@ def get_parms():
     weighted = False
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:t:fdw:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:t:fdw", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -183,11 +183,11 @@ def get_parms():
         elif o in ("-t", "--trace"):
             fs_trace = a
         elif o in ("-f", "--filelevel"):
-                filelevel = True
+            filelevel = True
         elif o in ("-d", "--dedup"):
-                dedup = True
+            dedup = True
         elif o in ("-w", "--weighted"):
-                weighted = True
+            weighted = True
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
@@ -265,14 +265,19 @@ def print_result(model, raid_failure_samples, lse_samples, systems_with_data_los
 
     NOMDL = value_result[0]/total_capacity
     if model.filelevel == False:
-        print "Bytes of Blocks/Chunks Lost: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
-    elif model.weighted == False:
-        print "# of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %e files per TB" % NOMDL
+        if model.weighted == False:
+            print "# of Blocks/Chunks Lost: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+            print "NOMDL (Normalized Magnitude of Data Loss): %e chunks per TB" % NOMDL
+        else:
+            print "Bytes of Blocks/Chunks Lost: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+            print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
     else:
-        print "Size of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
-        print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
+        if model.weighted == False:
+            print "# of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+            print "NOMDL (Normalized Magnitude of Data Loss): %e files per TB" % NOMDL
+        else:
+            print "Size of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
+            print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
     print "**************************************"
 
 def do_it():
