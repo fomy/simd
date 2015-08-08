@@ -7,19 +7,14 @@ from mpmath import *
 from component import *
 
 class DeduplicationModel:
-    MODEA = 'A'
-    MODEB = 'B'
-    MODEC = 'C'
 
-    def __init__(self, trace, mode, dedup):
+    def __init__(self, trace, filelevel, dedup, weighted):
         self.trace = trace
-        self.mode = mode
+        self.filelevel = filelevel 
         self.dedup = dedup
+        self.weighted = weighted
         self.df = 1.0
         
-        assert(self.mode == DeduplicationModel.MODEA or
-                self.mode == DeduplicationModel.MODEB or
-                self.mode == DeduplicationModel.MODEC)
 
     def raid_failure(self, corrupted_area):
         return None
@@ -27,9 +22,13 @@ class DeduplicationModel:
     def sector_error(self, lse_count):
         return None
 
-class DeduplicationModelA_NoDedup(DeduplicationModel):
-    def __init__(self):
+class DeduplicationModel_Chunk_NoDedup(DeduplicationModel):
+    def __init__(self, weighted):
+        self.filelevel = False
+        self.dedup = False
+
         self.filesystem = None
+        self.weighted = weighted
         self.df = 1.0
 
     # percent of corrupted blocks
@@ -39,21 +38,31 @@ class DeduplicationModelA_NoDedup(DeduplicationModel):
     # the size of corrupted 8KB blocks 
     def sector_error(self, lse_count):
         # multiply with file system block
-        return lse_count * 8192
+        if self.weighted:
+            return lse_count * 8192
+        else:
+            return lse_count
 
-# chunk size * reference count
-# chunk size * reference count
+# reference count / chunk size * reference count
+# reference count / chunk size * reference count
 # ...
 # D/F
 # 0% progress
 # 1% progress
 # ...
 # 100% progress
-class DeduplicationModelA_Dedup(DeduplicationModel):
-    def __init__(self, trace):
+class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
+    def __init__(self, trace, weighted):
+        self.filelevel = False
+        self.dedup = True
+
+        self.weighted = weighted 
         self.trace = trace
         tracefile = open(self.trace, "r")
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE A:DEDUP\n")
+        if self.weighted:
+            assert(list(itertools.islice(tracefile, 1))[0] == "CHUNK:DEDUP:WEIGHTED\n")
+        else:
+            assert(list(itertools.islice(tracefile, 1))[0] == "CHUNK:DEDUP:NOT WEIGHTED\n")
 
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
         self.df = self.filesystem[-102]
@@ -66,22 +75,26 @@ class DeduplicationModelA_Dedup(DeduplicationModel):
 
     # the size of corrupted logical chunks
     def sector_error(self, lse_count):
-        bytes_lost = 0;
+        lost = 0;
         for i in xrange(lse_count):
-             bytes_lost += self.filesystem[random.randrange(self.lse_range)]
+             lost += self.filesystem[random.randrange(self.lse_range)]
 
-        return bytes_lost
+        return lost 
 
 # 0% progress
 # 1% progress
 # ...
 # 100% progress
-class DeduplicationModelB_NoDedup(DeduplicationModel):
+class DeduplicationModel_File_NoDedup_NotWeighted(DeduplicationModel):
     def __init__(self, trace):
+        self.filelevel = True
+        self.dedup = False
+        self.weighted = False
+
         self.trace = trace
         tracefile = open(self.trace, "r")
 
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:NO DEDUP\n")
+        assert(list(itertools.islice(tracefile, 1))[0] == "FILE:NO DEDUP:NOT WEIGHTED\n")
 
         # Totally 101 items for RAID failures
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
@@ -102,12 +115,16 @@ class DeduplicationModelB_NoDedup(DeduplicationModel):
 # 1% progress
 # ...
 # 100% progress
-class DeduplicationModelC_NoDedup(DeduplicationModel):
+class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
     def __init__(self, trace):
+        self.filelevel = True
+        self.dedup = False
+        self.weighted = True
+
         self.trace = trace
         tracefile = open(self.trace, "r")
 
-        assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:NO DEDUP\n")
+        assert(list(itertools.islice(tracefile, 1))[0] == "FILE:NO DEDUP:WEIGHTED\n")
 
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
         self.df = 1.0
@@ -128,19 +145,23 @@ class DeduplicationModelC_NoDedup(DeduplicationModel):
 # referred file size (MODE C)/count (MODE B) for chunk 1 
 # referred file size/count for chunk 2 
 # ...
+# D/F
 # 0% progress
 # 1% progress
 # ...
 # 100% progress
-class DeduplicationModelBC_Dedup(DeduplicationModel):
-    def __init__(self, mode, trace):
+class DeduplicationModel_File_Dedup(DeduplicationModel):
+    def __init__(self, trace, weighted):
+        self.filelevel = True
+        self.dedup = True
+        self.weighted = weighted
         self.trace = trace
         tracefile = open(self.trace, "r")
 
-        if mode == DeduplicationModel.MODEB:
-            assert(list(itertools.islice(tracefile, 1))[0] == "MODE B:DEDUP\n")
+        if self.weighted:
+            assert(list(itertools.islice(tracefile, 1))[0] == "FILE:DEDUP:WEIGHTED\n")
         else:
-            assert(list(itertools.islice(tracefile, 1))[0] == "MODE C:DEDUP\n")
+            assert(list(itertools.islice(tracefile, 1))[0] == "FILE:DEDUP:NOT WEIGHTED\n")
 
         # The last 101 items are for RAID failures
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
@@ -168,7 +189,7 @@ class System:
 
     # A system consists of many RAIDs
     def __init__(self, mission_time, raid_type, raid_num, disk_capacity, 
-            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, trace, mode, dedup):
+            disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, trace, filelevel, dedup, weighted):
         self.mission_time = mission_time
         self.raid_num = raid_num
         self.avail_raids = raid_num
@@ -180,19 +201,18 @@ class System:
         self.raids = [Raid(raid_type, disk_capacity, disk_fail_parms,
                 disk_repair_parms, disk_lse_parms, disk_scrubbing_parms) for i in range(raid_num)]
 
-        if mode == DeduplicationModel.MODEA and dedup == 0:
-            self.dedup_model = DeduplicationModelA_NoDedup()
-        elif mode == DeduplicationModel.MODEA and dedup != 0:
-            self.dedup_model = DeduplicationModelA_Dedup(trace)
-        elif mode == DeduplicationModel.MODEB and dedup == 0:
-            self.dedup_model = DeduplicationModelB_NoDedup(trace)
-        elif mode == DeduplicationModel.MODEC and dedup == 0:
-            self.dedup_model = DeduplicationModelC_NoDedup(trace)
-        elif dedup != 0:
-            self.dedup_model = DeduplicationModelBC_Dedup(mode, trace)
+        if filelevel == False:
+            if dedup == False:
+                self.dedup_model = DeduplicationModel_Chunk_NoDedup(weighted)
+            else:
+                self.dedup_model = DeduplicationModel_Chunk_Dedup(trace, weighted)
         else:
-            assert(self.mode == DeduplicationModel.MODEA or self.mode == DeduplicationModel.MODEB 
-                    or self.mode == DeduplicationModel.MODEC)
+            if dedup == False and weighted == False:
+                self.dedup_model = DeduplicationModel_File_NoDedup_NotWeighted(trace);
+            elif dedup == False and weighted == True:
+                self.dedup_model = DeduplicationModel_File_NoDedup_Weighted(trace);
+            elif dedup == True:
+                self.dedup_model = DeduplicationModel_File_Dedup(trace, weighted)
 
     def reset(self):
         self.event_queue = []

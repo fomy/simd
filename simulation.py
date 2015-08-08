@@ -12,7 +12,7 @@ class Simulation:
 
     def __init__(self, mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
-            fs_trace, mode, dedup):
+            fs_trace, filelevel, dedup, weighted):
         self.mission_time = mission_time
         self.iterations = iterations
         self.raid_type = raid_type
@@ -42,8 +42,9 @@ class Simulation:
         self.more_iterations = 0
 
         self.fs_trace = fs_trace
-        self.mode = mode
+        self.filelevel = filelevel 
         self.dedup = dedup
+        self.weighted = weighted
         
         self.start_time = datetime.datetime.now()
 
@@ -72,6 +73,7 @@ class Simulation:
                 if result[0] != 0:
                     self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
                     self.systems_with_raid_failures += 1
+                    #print "%f" % result[0]
                 if result[1] != 0:
                     self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
                     self.systems_with_lse += 1
@@ -84,7 +86,7 @@ class Simulation:
     def simulate(self):
 
         self.system = System(self.mission_time, self.raid_type, self.raid_num, self.disk_capacity, self.disk_fail_parms,
-            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms, self.fs_trace, self.mode, self.dedup)
+            self.disk_repair_parms, self.disk_lse_parms, self.disk_scrubbing_parms, self.fs_trace, self.filelevel, self.dedup, self.weighted)
 
         self.more_iterations = self.iterations
         while True:
@@ -115,5 +117,5 @@ class Simulation:
 
         # finished, return results
         # the format of result:
-        return (self.raid_failure_samples, self.lse_samples, self.systems_with_data_loss, self.systems_with_raid_failures, 
+        return (self.system.dedup_model, self.raid_failure_samples, self.lse_samples, self.systems_with_data_loss, self.systems_with_raid_failures, 
                 self.systems_with_lse, self.iterations, self.system.get_df())

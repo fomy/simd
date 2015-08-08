@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import time
 import sys
 import logging
@@ -19,9 +20,11 @@ def usage(arg):
     print "-L <disk_lse_dist> [--disk_lse_dist <disk_lse_dist>]"
     print "-S <disk_scrubbing_dist> [--disk_scrubbing_dist <disk_scrubbing_dist>]"
     print "-a <required_re> [--accuracy <required_re>]"
-    print "-f <trace> [--trace <trace_file>]"
-    print "-M <mode> [--mode <mode>]"
-    print "-d <enable_dedup> [--dedup <enable_dedup>]"
+    # file system model; 
+    print "-t <trace> [--trace <trace_file>]"
+    print "-f [--filelevel]"
+    print "-d [--dedup]"
+    print "-w [--weighted]"
     print ""
     print "Detail:"
     print "mission_time = simulation end time in hours, default is 87600"
@@ -87,11 +90,12 @@ def get_parms():
 
     # file system trace
     fs_trace = None
-    mode = DeduplicationModel.MODEA
-    dedup = 0
+    filelevel = False
+    dedup = False
+    weighted = False
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:f:M:d:", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:t:fdw:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -102,8 +106,9 @@ def get_parms():
                                                                              "disk_scrubbing_dist",
                                                                              "accuracy",
                                                                              "trace",
-                                                                             "mode",
+                                                                             "filelevel"
                                                                              "dedup",
+                                                                             "weighted",
                                                                              ])
     except:
         usage(sys.argv[0])
@@ -175,21 +180,14 @@ def get_parms():
         elif o in ("-a", "--accuracy"):
             force_re = True
             required_re = float(a)
-        elif o in ("-f", "--trace"):
+        elif o in ("-t", "--trace"):
             fs_trace = a
-        elif o in ("-M", "--mode"):
-            if a[0] == 'A' or a[0] == 'a':
-                mode = DeduplicationModel.MODEA 
-            elif a[0] == 'B' or a[0] == 'b':
-                mode = DeduplicationModel.MODEB 
-            elif a[0] == 'C' or a[0] == 'c':
-                mode = DeduplicationModel.MODEC 
-            else:
-                print "invalid mode"
-                exit(-1)
+        elif o in ("-f", "--filelevel"):
+                filelevel = True
         elif o in ("-d", "--dedup"):
-            if int(a) != 0:
-                dedup = 1
+                dedup = True
+        elif o in ("-w", "--weighted"):
+                weighted = True
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
@@ -227,9 +225,9 @@ def get_parms():
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
-            fs_trace, mode, dedup)
+            fs_trace, filelevel, dedup, weighted)
 
-def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss, 
+def print_result(model, raid_failure_samples, lse_samples, systems_with_data_loss, 
         systems_with_raid_failures, systems_with_lse, iterations, raid_type, raid_num, disk_capacity, df):
 
     (type, d, p) = raid_type.split("_");
@@ -239,13 +237,8 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
 
     localtime = time.asctime(time.localtime(time.time()))
     print "**************************************"
-    print "System (%s): %.2fTB data, D/F = %.4f, %d of %s RAID, %ld iterations," % (localtime, total_capacity, df, raid_num, raid_type, iterations),
-    if mode == DeduplicationModel.MODEA:
-        print "Mode A"
-    elif mode == DeduplicationModel.MODEB:
-        print "Mode B"
-    elif mode == DeduplicationModel.MODEC:
-        print "Mode C"
+    print "System (%s): %.2fTB data, D/F = %.4f, %d of %s RAID, %ld iterations" % (localtime, total_capacity, df, raid_num, raid_type, iterations)
+    print "Filelevel =", model.filelevel, ", Dedup =", model.dedup, ", Weighted =", model.weighted
     print "Summary: %d of systems with data loss events (%d by raid failures, %d by lse)" % (systems_with_data_loss, systems_with_raid_failures, systems_with_lse)
 
     prob_result = (raid_failure_samples.prob_mean, 100*raid_failure_samples.prob_re, raid_failure_samples.prob_mean - raid_failure_samples.prob_ci, 
@@ -255,12 +248,12 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
 
     print "******** RAID Failure Part ***********"
     print "Probability of RAID Failures: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
-    if mode == DeduplicationModel.MODEA:
+    if model.filelevel == False:
         print "Fraction of Blocks/Chunks Lost in the Failed Disk: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
-    elif mode == DeduplicationModel.MODEB:
+    elif model.weighted == False:
         print "Fraction of Files Lost: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
-    elif mode == DeduplicationModel.MODEC:
-        print "Fraction of Files Lost in Bytes: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
+    else:
+        print "Fraction of Files Lost Weighted by Bytes: %e +/- %f Percent, CI (%e,%e), StdDev: %e" % value_result
 
     prob_result = (lse_samples.prob_mean, 100*lse_samples.prob_re, lse_samples.prob_mean - lse_samples.prob_ci, 
             lse_samples.prob_mean + lse_samples.prob_ci, lse_samples.prob_dev)
@@ -271,13 +264,13 @@ def print_result(mode, raid_failure_samples, lse_samples, systems_with_data_loss
     print "Probability of LSEs: %e +/- %f Percent , CI (%e,%e), StdDev: %e" % prob_result
 
     NOMDL = value_result[0]/total_capacity
-    if mode == DeduplicationModel.MODEA:
+    if model.filelevel == False:
         print "Bytes of Blocks/Chunks Lost: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
         print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
-    elif mode == DeduplicationModel.MODEB:
+    elif model.weighted == False:
         print "# of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
         print "NOMDL (Normalized Magnitude of Data Loss): %e files per TB" % NOMDL
-    elif mode == DeduplicationModel.MODEC:
+    else:
         print "Size of Corrupted Files: %e +/- %f Percent, CI (%f,%f), StdDev: %e" % value_result
         print "NOMDL (Normalized Magnitude of Data Loss): %e bytes per TB" % NOMDL
     print "**************************************"
@@ -287,14 +280,14 @@ def do_it():
     parms = get_parms()
     simulation = Simulation(*parms)
 
-    (raid_failure_samples, lse_samples, systems_with_data_loss, 
+    (model, raid_failure_samples, lse_samples, systems_with_data_loss, 
             systems_with_raid_failures, systems_with_lse, iterations, df) = simulation.simulate()
     
     raid_type = parms[2]
     raid_num = parms[3]
     disk_capacity = parms[4]
 
-    print_result(parms[-2], raid_failure_samples, lse_samples, systems_with_data_loss, 
+    print_result(model, raid_failure_samples, lse_samples, systems_with_data_loss, 
             systems_with_raid_failures, systems_with_lse, iterations, raid_type, raid_num, disk_capacity, df)
 
 def sig_quit(sig, frame):
@@ -311,7 +304,7 @@ def sig_quit(sig, frame):
     object.lse_samples.calcResults("0.95")
 
     iterations = object.iterations - object.more_iterations + object.cur_i
-    print_result(object.mode, object.raid_failure_samples, object.lse_samples, object.systems_with_data_loss, 
+    print_result(object.system.dedup_model, object.raid_failure_samples, object.lse_samples, object.systems_with_data_loss, 
             object.systems_with_raid_failures, object.systems_with_lse, 
             iterations, object.raid_type, object.raid_num, object.disk_capacity, object.system.get_df())
 
