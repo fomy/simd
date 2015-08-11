@@ -71,7 +71,9 @@ class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
 
     # percent of corrupted logical chunks
     def raid_failure(self, corrupted_area):
-        return 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
+        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
+        assert(result<=1 and result>=0)
+        return result
 
     # the size of corrupted logical chunks
     def sector_error(self, lse_count):
@@ -79,6 +81,7 @@ class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
         for i in xrange(lse_count):
              lost += self.filesystem[random.randrange(self.lse_range)]
 
+        assert(lost>=0)
         return lost 
 
 # 0% progress
@@ -102,7 +105,9 @@ class DeduplicationModel_File_NoDedup_NotWeighted(DeduplicationModel):
 
     # percent of corrupted files
     def raid_failure(self, corrupted_area):
-        return 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
+        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
+        assert(result>=0 and result<=1)
+        return result
 
     # number of corrupted files
     def sector_error(self, lse_count):
@@ -132,7 +137,9 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 
     # percent of corrupted files in size
     def raid_failure(self, corrupted_area):
-        return 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
+        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
+        assert(result <= 1 and result >= 0)
+        return result 
 
     # size of corrupted files
     def sector_error(self, lse_count):
@@ -140,6 +147,7 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
         for i in xrange(lse_count):
              bytes_lost += self.filesystem[random.randrange(self.lse_range)]
 
+        assert(bytes_lost>=0)
         return bytes_lost
 
 # referred file size (MODE C)/count (MODE B) for chunk 1 
@@ -170,7 +178,9 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
 
     # percent of corrupted files in number or size
     def raid_failure(self, corrupted_area):
-        return 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
+        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
+        assert(result >= 0 and result <= 1)
+        return result
 
     # number or size of corrupted files
     def sector_error(self, lse_count):
@@ -178,6 +188,7 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
         for i in xrange(lse_count):
              corrupted_files += self.filesystem[random.randrange(self.lse_range)]
 
+        assert(corrupted_files>=0)
         return corrupted_files
 
 class System:
@@ -225,7 +236,7 @@ class System:
         results = [0, 0]
         for raid in self.raids:
             if(raid.state == Raid.RAID_STATE_FAILED):
-                # Not support nultiple RAIDs in this model
+                # Not support multiple RAIDs in this model
                 results[0] = self.dedup_model.raid_failure(raid.corrupted_area)
 
             results[1] += self.dedup_model.sector_error(raid.lse_count)
