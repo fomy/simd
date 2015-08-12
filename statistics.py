@@ -5,7 +5,7 @@
 # Kevin Greenan (kmgreen@cs.ucsc.edu)
 #
 # Improved by Min Fu (fumin@hust.edu.cn)
-from mpmath import *
+from math import *
 import random
 
 #
@@ -21,9 +21,9 @@ class Samples:
     #
     def __init__(self):
 
-        self.value_sum = mpf(0)
-        self.value2_sum = mpf(0)
-        self.prob_sum = mpf(0)
+        self.value_sum = 0
+        self.value2_sum = 0
+        self.prob_sum = 0
 
         self.num_samples = 0
 
@@ -32,11 +32,11 @@ class Samples:
         # interval around a sample mean
         #
         self.conf_lvl_lku = {}
-        self.conf_lvl_lku["0.80"] = mpf(1.281)
-        self.conf_lvl_lku["0.85"] = mpf(1.440)
-        self.conf_lvl_lku["0.90"] = mpf(1.645)
-        self.conf_lvl_lku["0.95"] = mpf(1.960)
-        self.conf_lvl_lku["0.995"] = mpf(2.801)
+        self.conf_lvl_lku["0.80"] = 1.281
+        self.conf_lvl_lku["0.85"] = 1.440
+        self.conf_lvl_lku["0.90"] = 1.645
+        self.conf_lvl_lku["0.95"] = 1.960
+        self.conf_lvl_lku["0.995"] = 2.801
 
         self.value_mean = None
         self.value_mean2 = None
@@ -55,7 +55,7 @@ class Samples:
     def addSamples(self, samples, num):
         for sample in samples:
             self.value_sum += sample
-            self.value2_sum += power(sample, 2)
+            self.value2_sum += pow(sample, 2)
             self.prob_sum += 1
 
         self.num_samples += num 
@@ -63,7 +63,7 @@ class Samples:
     def addSample(self, sample):
         if sample > 0:
             self.value_sum += sample
-            self.value2_sum += power(sample, 2)
+            self.value2_sum += pow(sample, 2)
             self.prob_sum += 1
 
         self.num_samples += 1
@@ -72,9 +72,9 @@ class Samples:
     # Calculate the sample mean based on the samples for this instance
     #
     def calcMean(self):
-        self.value_mean = self.value_sum / self.num_samples
-        self.value2_mean = self.value2_sum / self.num_samples
-        self.prob_mean = self.prob_sum / self.num_samples
+        self.value_mean = 1.0 * self.value_sum / self.num_samples
+        self.value2_mean = 1.0 * self.value2_sum / self.num_samples
+        self.prob_mean = 1.0 * self.prob_sum / self.num_samples
 
     #
     # Calculate the standard deviation based on the samples for this instance
@@ -82,8 +82,8 @@ class Samples:
     #
     def calcStdDev(self ):
         self.calcMean()
-        self.value_dev = sqrt(self.value2_mean - power(self.value_mean, 2))
-        self.prob_dev = sqrt(self.prob_mean - power(self.prob_mean, 2))
+        self.value_dev = sqrt(self.value2_mean - pow(self.value_mean, 2))
+        self.prob_dev = sqrt(self.prob_mean - pow(self.prob_mean, 2))
 
 
     #
@@ -149,6 +149,3 @@ def test():
 
 if __name__ == "__main__":
     test()    
-
-
-

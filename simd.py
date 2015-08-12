@@ -3,7 +3,6 @@ import time
 import sys
 import logging
 import signal
-from mpmath import *
 from numpy import random
 import getopt
 

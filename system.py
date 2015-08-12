@@ -3,7 +3,6 @@ import logging
 import itertools
 from collections import deque
 import random
-from mpmath import *
 from component import *
 
 class DeduplicationModel:

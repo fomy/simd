@@ -1,4 +1,4 @@
-from mpmath import *
+from math import *
 import random
 
 class Weibull:
