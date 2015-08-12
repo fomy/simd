@@ -30,7 +30,7 @@ def usage(arg):
     print ""
     print "num_iterations = number of simulation runs, default is 10000"
     print ""
-    print "raid_type = the raid configuration , 7_1_mds by default"
+    print "raid_type = the raid configuration , 14_2_mds by default"
     print ""
     print "num_raids = number of raids in the system, defaut is 1"
     print ""
@@ -68,7 +68,7 @@ def get_parms():
     iterations = 10000L
     # the data/parity configuration
     # such as mds_7_1
-    raid_type = "mds_7_1"
+    raid_type = "mds_14_2"
     # the number of raid
     raid_num = 1
     # the number of sectors in each disk
