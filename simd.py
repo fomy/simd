@@ -302,7 +302,7 @@ def sig_quit(sig, frame):
         frame = frame.f_back
         object = frame.f_locals.get("self", None)
 
-    print "\nThe simulation is interrupted!"
+    print >>sys.stderr, "\nThe simulation is interrupted!"
 
     object.raid_failure_samples.calcResults("0.95")
     object.lse_samples.calcResults("0.95")
