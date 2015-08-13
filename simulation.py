@@ -60,9 +60,9 @@ class Simulation:
         for self.cur_i in xrange(iterations):
 
             if self.cur_i % 15000 == 0:
-                process = 1.0*self.cur_i/self.iterations
-                num = int(process * 100)
-                print >> sys.stderr,  "%6.2f%%: [" % (process*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%3dd%2dh%2dm%2ds \r"% self.get_runtime(),
+                progress = 1.0*self.cur_i/self.iterations
+                num = int(progress * 100)
+                print >> sys.stderr,  "%6.2f%%: [" % (progress*100), "\b= "*num, "\b\b>", " "*(100-num), "\b\b]", "%3dd%2dh%2dm%2ds \r"% self.get_runtime(),
 
             self.system.reset()
         
