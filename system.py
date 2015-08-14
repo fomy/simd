@@ -70,8 +70,9 @@ class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
 
     # percent of corrupted logical chunks
     def raid_failure(self, corrupted_area):
-        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
-        assert(result<=1 and result>=0)
+        index = int((corrupted_area+0.005)*100)
+        assert(index >= 0 and index <= 100)
+        result = 1.0 - self.filesystem[-1-index]
         return result
 
     # the size of corrupted logical chunks
@@ -104,8 +105,9 @@ class DeduplicationModel_File_NoDedup_NotWeighted(DeduplicationModel):
 
     # percent of corrupted files
     def raid_failure(self, corrupted_area):
-        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
-        assert(result>=0 and result<=1)
+        index = int((corrupted_area+0.005)*100)
+        assert(index >= 0 and index <= 100)
+        result = 1.0 - self.filesystem[-1-index]
         return result
 
     # number of corrupted files
@@ -136,8 +138,9 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 
     # percent of corrupted files in size
     def raid_failure(self, corrupted_area):
-        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)]
-        assert(result <= 1 and result >= 0)
+        index = int((corrupted_area+0.005)*100)
+        assert(index >= 0 and index <= 100)
+        result = 1.0 - self.filesystem[-1-index]
         return result 
 
     # size of corrupted files
@@ -177,8 +180,9 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
 
     # percent of corrupted files in number or size
     def raid_failure(self, corrupted_area):
-        result = 1.0 - self.filesystem[-1-int((corrupted_area+0.005)*100)] 
-        assert(result >= 0 and result <= 1)
+        index = int((corrupted_area+0.005)*100)
+        assert(index >= 0 and index <= 100)
+        result = 1.0 - self.filesystem[-1-index]
         return result
 
     # number or size of corrupted files
@@ -236,6 +240,7 @@ class System:
         for raid in self.raids:
             if(raid.state == Raid.RAID_STATE_FAILED):
                 # Not support multiple RAIDs in this model
+                assert(raid.corrupted_area >= 0 and raid.corrupted_area <= 1)
                 results[0] = self.dedup_model.raid_failure(raid.corrupted_area)
 
             results[1] += self.dedup_model.sector_error(raid.lse_count)
