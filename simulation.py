@@ -99,7 +99,7 @@ class Simulation:
             if self.force_re == False:
                 break
 
-            if self.raid_failure_samples.value_re > self.required_re:
+            if self.raid_failure_samples.value_re > self.lse_samples.value_re and self.raid_failure_samples.value_re > self.required_re:
                 self.more_iterations = int((self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations)
                 print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.value_re, self.required_re),
             elif self.lse_samples.value_re > self.required_re:
