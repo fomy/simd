@@ -38,8 +38,8 @@ class Simulation:
         self.systems_with_lse = 0
         self.systems_with_data_loss = 0
 
-        self.cur_i = 0
-        self.more_iterations = 0
+        self.cur_i = 0L
+        self.more_iterations = 0L
 
         self.fs_trace = fs_trace
         self.filelevel = filelevel 
@@ -100,16 +100,16 @@ class Simulation:
                 break
 
             if self.raid_failure_samples.value_re > self.lse_samples.value_re and self.raid_failure_samples.value_re > self.required_re:
-                self.more_iterations = int((self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations)
+                self.more_iterations = long((self.raid_failure_samples.value_re/self.required_re - 1) * self.iterations)
                 print >> sys.stderr, "Since RAID FAILURE Relative Error %5f > %5f," % (self.raid_failure_samples.value_re, self.required_re),
             elif self.lse_samples.value_re > self.required_re:
-                self.more_iterations = int((self.lse_samples.value_re/self.required_re - 1) * self.iterations)
+                self.more_iterations = long((self.lse_samples.value_re/self.required_re - 1) * self.iterations)
                 print >> sys.stderr, "Since LSE Relative Error %5f > %5f," % (self.lse_samples.value_re, self.required_re),
             else:
                 break
 
             if self.more_iterations < 10000:
-                self.more_iterations = 10000
+                self.more_iterations = 10000L
 
             print >> sys.stderr, "%d more iterations to meet the requirement." % self.more_iterations
 
