@@ -12,7 +12,7 @@ class Simulation:
 
     def __init__(self, mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
-            fs_trace, filelevel, dedup, weighted):
+            fs_trace, filelevel, dedup, weighted, output_file):
         self.mission_time = mission_time
         self.iterations = iterations
         self.raid_type = raid_type
@@ -48,6 +48,10 @@ class Simulation:
         
         self.start_time = datetime.datetime.now()
 
+        self.output = None
+        if output_file is not None:
+            self.output = open(output_file, "a")
+
     def get_runtime(self):
         delta = datetime.datetime.now() - self.start_time
         d = delta.days
@@ -70,13 +74,23 @@ class Simulation:
 
             if result[0] != 0 or result[1] != 0:
                 self.systems_with_data_loss += 1
+
                 if result[0] != 0:
                     self.logger.debug("%dth iteration: %s, %d bytes lost" % (self.cur_i, "RAID Failure", result[0]))
                     self.systems_with_raid_failures += 1
                     #print "%f" % result[0]
+
+                    if self.output:
+                        print >>self.output, "R=%.6f" % result[0],
+
                 if result[1] != 0:
                     self.logger.debug("%dth iterations: %s, %d bytes lost" % (self.cur_i, "Sectors Lost", result[1]))
                     self.systems_with_lse += 1
+                    if self.output:
+                        print >>self.output, "S=%d" % result[1],
+
+                if self.output is not None:
+                    print >>self.output, ""
 
             self.raid_failure_samples.addSample(result[0])
             self.lse_samples.addSample(result[1])
@@ -114,6 +128,10 @@ class Simulation:
             print >> sys.stderr, "%d more iterations to meet the requirement." % self.more_iterations
 
             self.iterations += self.more_iterations
+
+        if self.output is not None:
+            print >>self.output, "I=%d"%self.iterations
+            self.output.close()
 
         # finished, return results
         # the format of result:

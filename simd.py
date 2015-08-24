@@ -93,8 +93,11 @@ def get_parms():
     dedup = False
     weighted = False
 
+    # output all data loss events
+    output_events = None
+
     try:
-        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:t:fdw", ["help", "log", "mission_time", 
+        (opts, args) = getopt.getopt(sys.argv[1:], "hl:m:i:r:n:c:p:F:R:L:S:a:t:fdwo:", ["help", "log", "mission_time", 
                                                                              "iterations",
                                                                              "raid", "raid_num", 
                                                                              "capacity", 
@@ -108,6 +111,7 @@ def get_parms():
                                                                              "filelevel"
                                                                              "dedup",
                                                                              "weighted",
+                                                                             "output",
                                                                              ])
     except:
         usage(sys.argv[0])
@@ -187,6 +191,8 @@ def get_parms():
             dedup = True
         elif o in ("-w", "--weighted"):
             weighted = True
+        elif o in ("-o", "--output"):
+            output_events = a
 
     # TO-DO: We should verify these numbers
     # We assume larger disks will have longer repair and scrubbing time
@@ -224,7 +230,7 @@ def get_parms():
 
     return (mission_time, iterations, raid_type, raid_num, disk_capacity, 
             disk_fail_parms, disk_repair_parms, disk_lse_parms, disk_scrubbing_parms, force_re, required_re, 
-            fs_trace, filelevel, dedup, weighted)
+            fs_trace, filelevel, dedup, weighted, output_events)
 
 def print_result(model, raid_failure_samples, lse_samples, systems_with_data_loss, 
         systems_with_raid_failures, systems_with_lse, iterations, raid_type, raid_num, disk_capacity, df):
@@ -311,6 +317,9 @@ def sig_quit(sig, frame):
     print_result(object.system.dedup_model, object.raid_failure_samples, object.lse_samples, object.systems_with_data_loss, 
             object.systems_with_raid_failures, object.systems_with_lse, 
             iterations, object.raid_type, object.raid_num, object.disk_capacity, object.system.get_df())
+    if object.output is not None:
+        print >>object.output, "I=%d" % iterations
+        object.output.close()
 
     sys.exit(1)
 
