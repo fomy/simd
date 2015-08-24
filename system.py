@@ -13,7 +13,6 @@ class DeduplicationModel:
         self.dedup = dedup
         self.weighted = weighted
         self.df = 1.0
-        
 
     def raid_failure(self, corrupted_area):
         return None

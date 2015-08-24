@@ -5,7 +5,7 @@
 # Kevin Greenan (kmgreen@cs.ucsc.edu)
 #
 # Improved by Min Fu (fumin@hust.edu.cn)
-from math import *
+import math
 import random
 
 #
@@ -25,7 +25,7 @@ class Samples:
         self.value2_sum = 0
         self.prob_sum = 0
 
-        self.num_samples = 0
+        self.num_samples = 0L
 
         # 
         # A static table used to estimate the confidence 
@@ -68,6 +68,9 @@ class Samples:
 
         self.num_samples += 1
 
+    def addZeros(self, num):
+        self.num_samples += num
+
     #
     # Calculate the sample mean based on the samples for this instance
     #
@@ -82,9 +85,8 @@ class Samples:
     #
     def calcStdDev(self ):
         self.calcMean()
-        self.value_dev = sqrt(self.value2_mean - pow(self.value_mean, 2))
-        self.prob_dev = sqrt(self.prob_mean - pow(self.prob_mean, 2))
-
+        self.value_dev = math.sqrt(self.value2_mean - pow(self.value_mean, 2))
+        self.prob_dev = math.sqrt(self.prob_mean - pow(self.prob_mean, 2))
 
     #
     # Calculate the confidence interval around the sample mean 
@@ -99,8 +101,8 @@ class Samples:
     
         self.calcStdDev()
 
-        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / sqrt(self.num_samples)))
-        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / sqrt(self.num_samples)))
+        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / math.sqrt(self.num_samples)))
+        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / math.sqrt(self.num_samples)))
 
     #
     # Calculate the relative error 
