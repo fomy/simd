@@ -62,7 +62,7 @@ class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
         else:
             assert(list(itertools.islice(tracefile, 1))[0] == "CHUNK:DEDUP:NOT WEIGHTED\n")
 
-        self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
+        self.filesystem = [float(i) for i in itertools.islice(tracefile, 0, None)]
         self.df = self.filesystem[-102]
         self.lse_range = len(self.filesystem) - 102
         tracefile.close()
@@ -99,7 +99,9 @@ class DeduplicationModel_File_NoDedup_NotWeighted(DeduplicationModel):
         assert(list(itertools.islice(tracefile, 1))[0] == "FILE:NO DEDUP:NOT WEIGHTED\n")
 
         # Totally 101 items for RAID failures
-        self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
+        self.filesystem = [float(i) for i in itertools.islice(tracefile, 0, None)]
+        print >>sys.stderr, len(self.filesystem)
+        print self.filesystem
         self.df = 1.0
 
     # percent of corrupted files
@@ -131,7 +133,7 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 
         assert(list(itertools.islice(tracefile, 1))[0] == "FILE:NO DEDUP:WEIGHTED\n")
 
-        self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
+        self.filesystem = [float(i) for i in itertools.islice(tracefile, 0, None)]
         self.df = 1.0
         self.lse_range = len(self.filesystem) - 101
 
@@ -173,7 +175,7 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
             assert(list(itertools.islice(tracefile, 1))[0] == "FILE:DEDUP:NOT WEIGHTED\n")
 
         # The last 101 items are for RAID failures
-        self.filesystem = [float(i) for i in itertools.islice(tracefile, 1, None)]
+        self.filesystem = [float(i) for i in itertools.islice(tracefile, 0, None)]
         self.df = self.filesystem[-102]
         self.lse_range = len(self.filesystem) - 102
 
