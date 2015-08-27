@@ -100,8 +100,6 @@ class DeduplicationModel_File_NoDedup_NotWeighted(DeduplicationModel):
 
         # Totally 101 items for RAID failures
         self.filesystem = [float(i) for i in itertools.islice(tracefile, 0, None)]
-        print >>sys.stderr, len(self.filesystem)
-        print self.filesystem
         self.df = 1.0
 
     # percent of corrupted files
