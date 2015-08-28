@@ -6,7 +6,7 @@
 #
 # Improved by Min Fu (fumin@hust.edu.cn)
 import random
-from mpmath import *
+import mpmath
 
 #
 # A Class that incapsulates a set of samples with 
@@ -21,9 +21,9 @@ class Samples:
     #
     def __init__(self):
 
-        self.value_sum = mpf(0)
-        self.value2_sum = mpf(0)
-        self.prob_sum = mpf(0)
+        self.value_sum = 0L
+        self.value2_sum = 0L
+        self.prob_sum = 0L
 
         self.num_samples = 0L
 
@@ -75,9 +75,9 @@ class Samples:
     # Calculate the sample mean based on the samples for this instance
     #
     def calcMean(self):
-        self.value_mean = 1.0 * self.value_sum / self.num_samples
-        self.value2_mean = 1.0 * self.value2_sum / self.num_samples
-        self.prob_mean = 1.0 * self.prob_sum / self.num_samples
+        self.value_mean = self.value_sum / mpmath.mpf(self.num_samples)
+        self.value2_mean = self.value2_sum / mpmath.mpf(self.num_samples)
+        self.prob_mean = self.prob_sum / mpmath.mpf(self.num_samples)
 
     #
     # Calculate the standard deviation based on the samples for this instance
@@ -85,8 +85,8 @@ class Samples:
     #
     def calcStdDev(self ):
         self.calcMean()
-        self.value_dev = sqrt(self.value2_mean - pow(self.value_mean, 2))
-        self.prob_dev = sqrt(self.prob_mean - pow(self.prob_mean, 2))
+        self.value_dev = mpmath.sqrt(self.value2_mean - pow(self.value_mean, 2))
+        self.prob_dev = mpmath.sqrt(self.prob_mean - pow(self.prob_mean, 2))
 
     #
     # Calculate the confidence interval around the sample mean 
@@ -101,8 +101,8 @@ class Samples:
     
         self.calcStdDev()
 
-        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / sqrt(self.num_samples)))
-        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / sqrt(self.num_samples)))
+        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / mpmath.sqrt(self.num_samples)))
+        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / mpmath.sqrt(self.num_samples)))
 
     #
     # Calculate the relative error 
