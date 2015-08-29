@@ -11,6 +11,9 @@ def inject(eventfile, model):
     systems_with_lse = 0
     systems_with_data_loss = 0
 
+    lse_count = 0
+    raid_count = 0
+
     raid_failure_samples = Samples()
     lse_samples = Samples()
 
@@ -25,11 +28,15 @@ def inject(eventfile, model):
             if result[0] is "I":
                 iteration = long(result[1])
 
-                lse_samples.addZeros(iteration - systems_with_data_loss)
-                raid_failure_samples.addZeros(iteration - systems_with_data_loss)
+                lse_samples.addZeros(iteration-lse_count)
+                raid_failure_samples.addZeros(iteration-raid_count)
 
                 total_iterations += iteration
-                systems_with_data_loss -= 1
+                systems_with_data_loss -= 1 
+
+                lse_count = 0
+                raid_count = 0
+
                 continue
 
             if result[0] is "R":
@@ -40,23 +47,27 @@ def inject(eventfile, model):
 
                 raid_failure_samples.addSample(fraction)
 
+                raid_count += 1
+
                 #print >>sys.stderr, "R=%f -> %f" % (corrupted_area, fraction),
             elif result[0] is "S":
                 systems_with_lse += 1
-                lse_count = int(result[1])
+                lse_num = int(result[1])
 
-                loss = model.sector_error(lse_count)
+                loss = model.sector_error(lse_num)
 
                 lse_samples.addSample(loss)
 
-                #print >>sys.stderr, "S=%d -> %d" % (lse_count, loss),
+                lse_count += 1
+
+                #print >>sys.stderr, "S=%d -> %d" % (lse_num, loss),
 
         #print >>sys.stderr, ""
 
     #print >>sys.stderr, "I=%d" % total_iterations
 
-    raid_failure_samples.calcResults("0.95")
-    lse_samples.calcResults("0.95")
+    raid_failure_samples.calcResults("0.995")
+    lse_samples.calcResults("0.995")
 
     return (raid_failure_samples, lse_samples, systems_with_data_loss, systems_with_raid_failure,
             systems_with_lse, total_iterations)

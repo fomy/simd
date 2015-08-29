@@ -25,7 +25,7 @@ class Samples:
         self.value2_sum = 0L
         self.prob_sum = 0L
 
-        self.num_samples = 0L
+        self.num_samples = 0
 
         # 
         # A static table used to estimate the confidence 
@@ -66,10 +66,10 @@ class Samples:
             self.value2_sum += pow(sample, 2)
             self.prob_sum += 1
 
-        self.num_samples += 1
+        self.num_samples += 1L
 
     def addZeros(self, num):
-        self.num_samples += num
+        self.num_samples += long(num)
 
     #
     # Calculate the sample mean based on the samples for this instance
@@ -77,6 +77,7 @@ class Samples:
     def calcMean(self):
         self.value_mean = self.value_sum / mpmath.mpf(self.num_samples)
         self.value2_mean = self.value2_sum / mpmath.mpf(self.num_samples)
+
         self.prob_mean = self.prob_sum / mpmath.mpf(self.num_samples)
 
     #
