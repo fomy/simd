@@ -6,7 +6,7 @@
 #
 # Improved by Min Fu (fumin@hust.edu.cn)
 import random
-import mpmath
+import math
 
 #
 # A Class that incapsulates a set of samples with 
@@ -75,10 +75,10 @@ class Samples:
     # Calculate the sample mean based on the samples for this instance
     #
     def calcMean(self):
-        self.value_mean = self.value_sum / mpmath.mpf(self.num_samples)
-        self.value2_mean = self.value2_sum / mpmath.mpf(self.num_samples)
+        self.value_mean = self.value_sum / float(self.num_samples)
+        self.value2_mean = self.value2_sum / float(self.num_samples)
 
-        self.prob_mean = self.prob_sum / mpmath.mpf(self.num_samples)
+        self.prob_mean = self.prob_sum / float(self.num_samples)
 
     #
     # Calculate the standard deviation based on the samples for this instance
@@ -86,8 +86,8 @@ class Samples:
     #
     def calcStdDev(self ):
         self.calcMean()
-        self.value_dev = mpmath.sqrt(self.value2_mean - pow(self.value_mean, 2))
-        self.prob_dev = mpmath.sqrt(self.prob_mean - pow(self.prob_mean, 2))
+        self.value_dev = math.sqrt(self.value2_mean - pow(self.value_mean, 2))
+        self.prob_dev = math.sqrt(self.prob_mean - pow(self.prob_mean, 2))
 
     #
     # Calculate the confidence interval around the sample mean 
@@ -102,8 +102,8 @@ class Samples:
     
         self.calcStdDev()
 
-        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / mpmath.sqrt(self.num_samples)))
-        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / mpmath.sqrt(self.num_samples)))
+        self.value_ci = abs(self.conf_lvl_lku[conf_level] * (self.value_dev / math.sqrt(self.num_samples)))
+        self.prob_ci = abs(self.conf_lvl_lku[conf_level] * (self.prob_dev / math.sqrt(self.num_samples)))
 
     #
     # Calculate the relative error 

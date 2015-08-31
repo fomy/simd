@@ -66,8 +66,8 @@ def inject(eventfile, model):
 
     #print >>sys.stderr, "I=%d" % total_iterations
 
-    raid_failure_samples.calcResults("0.995")
-    lse_samples.calcResults("0.995")
+    raid_failure_samples.calcResults("0.95")
+    lse_samples.calcResults("0.95")
 
     return (raid_failure_samples, lse_samples, systems_with_data_loss, systems_with_raid_failure,
             systems_with_lse, total_iterations)
