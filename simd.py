@@ -3,7 +3,6 @@ import time
 import sys
 import logging
 import signal
-from numpy import random
 import getopt
 
 from simulation import *
