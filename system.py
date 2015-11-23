@@ -72,10 +72,12 @@ class DeduplicationModel_Chunk_Dedup(DeduplicationModel):
 		for line in tracefile:
 			if line[:-1].isdigit() == True:
 				self.use_array.append(int(line))
-			elif self.df == 0:
-				self.df = float(line)
 			else:
-				self.rf_array.append(float(line))
+				assert(self.df == 0)
+				self.df = float(line)
+				break;
+		for line in tracefile:
+			self.rf_array.append(float(line))
 		assert(self.df >= 1)
 		assert(len(self.rf_array) == 101)
 
@@ -149,10 +151,12 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 		for line in tracefile:
 			if line[:-1].isdigit() == True:
 				self.use_array.append(int(line))
-			elif self.df == 0:
+			else: 
+				assert(self.df == 0)
 				self.df = float(line)
-			else:
-				self.rf_array.append(float(line))
+				break
+		for line in tracefile:
+			self.rf_array.append(float(line))
 
 		assert(self.df >= 1)
 		assert(len(self.rf_array) == 101)
@@ -202,10 +206,12 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
 		for line in tracefile:
 			if line[:-1].isdigit() == True:
 				self.use_array.append(int(line))
-			elif self.df == 0:
-				self.df = float(line)
 			else:
-				self.rf_array.append(float(line))
+				assert(self.df == 0)
+				self.df = float(line)
+				break;
+		for line in tracefile:
+			self.rf_array.append(float(line))
 
 		assert(self.df >= 1)
 		assert(len(self.rf_array) == 101)
