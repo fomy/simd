@@ -146,6 +146,11 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 		self.trace = trace
 		tracefile = open(self.trace, "r")
 
+		# array of uncorrectable sector errors
+		self.use_array = array.array("l")
+		# array of raid failure
+		self.rf_array = array.array("f")
+
 		assert(tracefile.readline() == "FILE:NO DEDUP:WEIGHTED\n")
 
 		for line in tracefile:
@@ -201,6 +206,11 @@ class DeduplicationModel_File_Dedup(DeduplicationModel):
 			assert(tracefile.readline() == "FILE:DEDUP:NOT WEIGHTED\n")
 
 		self.df = 0
+
+		# array of uncorrectable sector errors
+		self.use_array = array.array("l")
+		# array of raid failure
+		self.rf_array = array.array("f")
 
 		# The last 101 items are for RAID failures
 		for line in tracefile:
