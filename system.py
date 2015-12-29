@@ -154,12 +154,12 @@ class DeduplicationModel_File_NoDedup_Weighted(DeduplicationModel):
 		assert(tracefile.readline() == "FILE:NO DEDUP:WEIGHTED\n")
 
 		for line in tracefile:
-			if line[:-1].isdigit() == True:
-				self.use_array.append(int(line))
-			else: 
-				assert(self.df == 0)
-				self.df = float(line)
+			if int(line) == 0:
+				self.df = 1.0
+				self.rf_array.append(float(line))
 				break
+			else:
+				self.use_array.append(int(line))
 		for line in tracefile:
 			self.rf_array.append(float(line))
 
